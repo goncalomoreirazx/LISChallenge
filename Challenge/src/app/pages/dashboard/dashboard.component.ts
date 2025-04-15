@@ -10,6 +10,9 @@ import { SidebarComponent } from '../../components/dashboard/sidebar/sidebar.com
   imports: [CommonModule, SidebarComponent]
 })
 export class DashboardComponent {
+  // Track sidebar collapsed state
+  sidebarCollapsed = false;
+  
   // Sample data for dashboard cards
   stats = [
     { title: 'Users', value: '1,254', icon: 'bi bi-people', color: 'primary' },
@@ -26,4 +29,10 @@ export class DashboardComponent {
     { id: 4, action: 'Customer support ticket closed', user: 'Bob Brown', time: '2 hours ago' },
     { id: 5, action: 'New comment received', user: 'Charlie Davis', time: '3 hours ago' }
   ];
+  
+  // Receive sidebar state changes - handle the event with correct typing
+  onSidebarStateChanged(event: any) {
+    // The event is the isCollapsed boolean value from the sidebar
+    this.sidebarCollapsed = Boolean(event);
+  }
 }

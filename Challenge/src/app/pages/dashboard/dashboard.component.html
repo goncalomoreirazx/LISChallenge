@@ -1,6 +1,6 @@
-<div class="dashboard-container">
+<div class="dashboard-container" [class.sidebar-collapsed]="sidebarCollapsed">
     <!-- Sidebar -->
-    <app-sidebar></app-sidebar>
+    <app-sidebar (sidebarStateChanged)="onSidebarStateChanged($event)"></app-sidebar>
     
     <!-- Main Content -->
     <div class="content-area">
