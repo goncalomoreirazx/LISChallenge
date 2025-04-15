@@ -7,6 +7,11 @@
             <h3 class="text-center font-weight-bold my-2">Login</h3>
           </div>
           <div class="card-body">
+            <!-- Success message after registration -->
+            <div *ngIf="registrationSuccess" class="alert alert-success mb-3">
+              Registration successful! Please login with your credentials.
+            </div>
+            
             <form (ngSubmit)="onSubmit()" #loginForm="ngForm">
               <!-- Email input -->
               <div class="mb-3">
@@ -51,12 +56,18 @@
                 </div>
               </div>
               
+              <!-- Error message display -->
+              <div *ngIf="errorMessage" class="alert alert-danger mb-3">
+                {{ errorMessage }}
+              </div>
+              
               <!-- Submit button -->
               <div class="d-grid gap-2 mb-3">
                 <button 
                   type="submit" 
                   class="btn btn-primary btn-lg" 
-                  [disabled]="!loginForm.form.valid">
+                  [disabled]="!loginForm.form.valid || isSubmitting">
+                  <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                   Login
                 </button>
               </div>

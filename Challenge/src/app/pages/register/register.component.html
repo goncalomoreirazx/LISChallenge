@@ -46,6 +46,21 @@
                   placeholder="Enter your email">
               </div>
               
+              <!-- User Type selection -->
+              <div class="mb-3">
+                <label for="userType" class="form-label">User Type</label>
+                <select 
+                  class="form-select" 
+                  id="userType" 
+                  name="userType" 
+                  [(ngModel)]="registerData.userType" 
+                  required>
+                  <option value="" disabled selected>Select user type</option>
+                  <option value="1">Project Manager</option>
+                  <option value="2">Programmer</option>
+                </select>
+              </div>
+              
               <!-- Password input -->
               <div class="mb-3">
                 <label for="password" class="form-label">Password</label>
@@ -56,6 +71,7 @@
                   name="password"
                   [(ngModel)]="registerData.password"
                   required
+                  minlength="8"
                   placeholder="Enter a strong password">
                 <small class="form-text text-muted">Password must be at least 8 characters long.</small>
               </div>
@@ -71,6 +87,9 @@
                   [(ngModel)]="registerData.confirmPassword"
                   required
                   placeholder="Confirm your password">
+                <div *ngIf="registerForm.submitted && registerData.password !== registerData.confirmPassword" class="text-danger">
+                  Passwords do not match
+                </div>
               </div>
               
               <!-- Terms and conditions -->
@@ -87,12 +106,18 @@
                 </label>
               </div>
               
+              <!-- Error message display -->
+              <div *ngIf="errorMessage" class="alert alert-danger mb-3">
+                {{ errorMessage }}
+              </div>
+              
               <!-- Submit button -->
               <div class="d-grid gap-2 mb-3">
                 <button 
                   type="submit" 
                   class="btn btn-primary btn-lg" 
-                  [disabled]="!registerForm.form.valid">
+                  [disabled]="!registerForm.form.valid || isSubmitting">
+                  <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
                   Register
                 </button>
               </div>

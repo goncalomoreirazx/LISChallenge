@@ -1,0 +1,12 @@
+{
+  "Version": 1,
+  "Hash": "7CpWnmacoWDAiOaY+JbHH09uF7xHTU+59KqGufIhQmo=",
+  "Source": "ChallengeServer",
+  "BasePath": "_content/ChallengeServer",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": [],
+  "Endpoints": []
+}
