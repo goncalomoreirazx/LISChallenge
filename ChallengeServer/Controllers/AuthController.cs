@@ -31,40 +31,48 @@ namespace ChallengeServer.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<UserDto>> Register(RegisterDto registerDto)
         {
-            // Check if email already exists
-            if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
+            try
             {
-                return Conflict(new { message = "Email already exists" });
+                // Check if email already exists
+                if (await _context.Users.AnyAsync(u => u.Email == registerDto.Email))
+                {
+                    return Conflict(new { message = "Email already exists" });
+                }
+
+                // Validate user type
+                if (registerDto.UserType != 1 && registerDto.UserType != 2)
+                {
+                    return BadRequest(new { message = "Invalid user type. Must be 1 (Project Manager) or 2 (Programmer)" });
+                }
+
+                // Create new user
+                var user = new User
+                {
+                    FullName = registerDto.FullName,
+                    Email = registerDto.Email,
+                    UserType = registerDto.UserType,
+                    PasswordHash = _passwordService.HashPassword(registerDto.Password),
+                    CreatedAt = DateTime.UtcNow
+                };
+
+                _context.Users.Add(user);
+                await _context.SaveChangesAsync();
+
+                // Return user dto (without password)
+                return Ok(new UserDto
+                {
+                    Id = user.Id,
+                    FullName = user.FullName,
+                    Email = user.Email,
+                    UserType = user.UserType,
+                    UserTypeDescription = user.UserTypeDescription
+                });
             }
-
-            // Validate user type
-            if (registerDto.UserType != 1 && registerDto.UserType != 2)
+            catch (Exception ex)
             {
-                return BadRequest(new { message = "Invalid user type. Must be 1 (Project Manager) or 2 (Programmer)" });
+                _logger.LogError(ex, "Error during user registration");
+                return StatusCode(500, new { message = "Internal server error occurred. Please try again later." });
             }
-
-            // Create new user
-            var user = new User
-            {
-                FullName = registerDto.FullName,
-                Email = registerDto.Email,
-                UserType = registerDto.UserType,
-                PasswordHash = _passwordService.HashPassword(registerDto.Password),
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-
-            // Return user dto (without password)
-            return Ok(new UserDto
-            {
-                Id = user.Id,
-                FullName = user.FullName,
-                Email = user.Email,
-                UserType = user.UserType,
-                UserTypeDescription = user.UserTypeDescription
-            });
         }
 
         [HttpPost("login")]

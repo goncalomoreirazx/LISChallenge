@@ -2,7 +2,7 @@ import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HttpClientModule, provideHttpClient } from '@angular/common/http';
+import { HttpClientModule } from '@angular/common/http';
 import { AuthService } from '../../services/auth-service.service';
 
 @Component({
@@ -10,8 +10,7 @@ import { AuthService } from '../../services/auth-service.service';
   templateUrl: './login.component.html',
   styleUrls: ['./login.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, HttpClientModule],
-  providers: [provideHttpClient(), AuthService]
+  imports: [CommonModule, RouterLink, FormsModule, HttpClientModule]
 })
 export class LoginComponent implements OnInit {
   loginData = {

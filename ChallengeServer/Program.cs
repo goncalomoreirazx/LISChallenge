@@ -98,26 +98,7 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
     
-    // Add automatic migrations and seeding in development
-    using (var scope = app.Services.CreateScope())
-    {
-        var services = scope.ServiceProvider;
-        try
-        {
-            var dbContext = services.GetRequiredService<AppDbContext>();
-            
-            // Ensure database is created and migrations are applied
-            dbContext.Database.Migrate();
-            
-            // Seed data
-            SeedData(dbContext, services.GetRequiredService<PasswordService>());
-        }
-        catch (Exception ex)
-        {
-            var logger = services.GetRequiredService<ILogger<Program>>();
-            logger.LogError(ex, "An error occurred while migrating or seeding the database.");
-        }
-    }
+    // Migration and seeding code removed
 }
 
 app.UseHttpsRedirection();
@@ -128,38 +109,4 @@ app.MapControllers();
 
 app.Run();
 
-// Database seeding method
-void SeedData(AppDbContext dbContext, PasswordService passwordService)
-{
-    // Check if we have the user types table defined
-    if (dbContext.Model.FindEntityType(typeof(UserType)) != null)
-    {
-        // Seed user types if they don't exist
-        if (!dbContext.UserTypes.Any())
-        {
-            dbContext.UserTypes.AddRange(
-                new UserType { Id = 1, Name = "Project Manager" },
-                new UserType { Id = 2, Name = "Programmer" }
-            );
-            dbContext.SaveChanges();
-        }
-    }
-    
-    // Check if we have the users table defined
-    if (dbContext.Model.FindEntityType(typeof(User)) != null)
-    {
-        // Seed admin user if it doesn't exist
-        if (!dbContext.Users.Any(u => u.Email == "admin@example.com"))
-        {
-            dbContext.Users.Add(new User
-            {
-                FullName = "Admin User",
-                Email = "admin@example.com",
-                PasswordHash = passwordService.HashPassword("Admin123!"),
-                UserType = 1, // Project Manager
-                CreatedAt = DateTime.UtcNow
-            });
-            dbContext.SaveChanges();
-        }
-    }
-}
+// SeedData method removed
