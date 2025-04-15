@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../environment/environment';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface User {
   id: number;
@@ -26,13 +27,22 @@ export class AuthService {
   private apiUrl = `${environment.apiUrl}/auth`; // Using environment configuration
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private platformId = inject(PLATFORM_ID);
+  private isBrowser: boolean;
 
   constructor(private http: HttpClient, private router: Router) { 
-    // Check if user is already logged in
-    this.loadStoredUser();
+    this.isBrowser = isPlatformBrowser(this.platformId);
+    
+    // Check if user is already logged in, but only in browser environment
+    if (this.isBrowser) {
+      this.loadStoredUser();
+    }
   }
 
   private loadStoredUser(): void {
+    // Only execute this in browser environment
+    if (!this.isBrowser) return;
+    
     // Try to get user from localStorage, then sessionStorage
     const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
     if (userData) {
@@ -55,6 +65,8 @@ export class AuthService {
   }
 
   public getToken(): string | null {
+    if (!this.isBrowser) return null;
+    
     return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
   }
 
@@ -77,10 +89,13 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
       .pipe(
         tap(response => {
-          // Store token and user data
-          const storage = rememberMe ? localStorage : sessionStorage;
-          storage.setItem('auth_token', response.token);
-          storage.setItem('user_data', JSON.stringify(response.user));
+          // Only store token and user data in browser environment
+          if (this.isBrowser) {
+            const storage = rememberMe ? localStorage : sessionStorage;
+            storage.setItem('auth_token', response.token);
+            storage.setItem('user_data', JSON.stringify(response.user));
+          }
+          
           this.currentUserSubject.next(response.user);
         }),
         catchError(error => {
@@ -91,11 +106,14 @@ export class AuthService {
   }
 
   logout(): void {
-    // Remove user from local storage and set current user to null
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
-    sessionStorage.removeItem('auth_token');
-    sessionStorage.removeItem('user_data');
+    // Only clear storage in browser environment
+    if (this.isBrowser) {
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      sessionStorage.removeItem('auth_token');
+      sessionStorage.removeItem('user_data');
+    }
+    
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
   }

@@ -1,6 +1,7 @@
 import { Component, HostListener, Inject, PLATFORM_ID, Output, EventEmitter } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
+import { AuthService } from '../../../services/auth-service.service';
 
 @Component({
   selector: 'app-sidebar',
@@ -23,7 +24,10 @@ export class SidebarComponent {
   isCollapsed = false;
   isMobile = false;
   
-  constructor(@Inject(PLATFORM_ID) private platformId: Object) {}
+  constructor(
+    @Inject(PLATFORM_ID) private platformId: Object,
+    private authService: AuthService
+  ) {}
   
   @HostListener('window:resize', ['$event'])
   onResize(event: any) {
@@ -67,5 +71,9 @@ export class SidebarComponent {
       this.isCollapsed = true;
       this.sidebarStateChanged.emit(this.isCollapsed);
     }
+  }
+  
+  logout() {
+    this.authService.logout();
   }
 }

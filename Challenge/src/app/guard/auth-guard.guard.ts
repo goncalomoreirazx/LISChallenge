@@ -1,17 +1,25 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, PLATFORM_ID } from '@angular/core';
 import { CanActivate, CanActivateFn, ActivatedRouteSnapshot, RouterStateSnapshot, Router } from '@angular/router';
 import { AuthService } from '../services/auth-service.service';
+import { isPlatformBrowser } from '@angular/common';
 
 @Injectable({
   providedIn: 'root'
 })
 export class AuthGuard implements CanActivate {
+  private platformId = inject(PLATFORM_ID);
+  
   constructor(private authService: AuthService, private router: Router) {}
 
   canActivate(
     route: ActivatedRouteSnapshot,
     state: RouterStateSnapshot
   ): boolean {
+    // When running on the server, allow all routes during SSR
+    if (!isPlatformBrowser(this.platformId)) {
+      return true;
+    }
+    
     // Check if the user is logged in
     if (this.authService.isLoggedIn()) {
       // Check if route has data specifying required user types
