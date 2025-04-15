@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
+import { environment } from '../environment/environment';
 
 export interface User {
   id: number;
@@ -22,6 +23,7 @@ export interface LoginResponse {
   providedIn: 'root'
 })
 export class AuthService {
+  private apiUrl = `${environment.apiUrl}/auth`; // Using environment configuration
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
@@ -62,7 +64,7 @@ export class AuthService {
     userType: number;
     password: string;
   }): Observable<any> {
-    return this.http.post<any>('/api/auth/register', userData)
+    return this.http.post<any>(`${this.apiUrl}/register`, userData)
       .pipe(
         catchError(error => {
           console.error('Registration error', error);
@@ -72,7 +74,7 @@ export class AuthService {
   }
 
   login(email: string, password: string, rememberMe: boolean): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>('/api/auth/login', { email, password })
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
       .pipe(
         tap(response => {
           // Store token and user data

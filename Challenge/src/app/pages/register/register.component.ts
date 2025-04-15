@@ -2,14 +2,16 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HttpClient, HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpClientModule, provideHttpClient } from '@angular/common/http';
+import { AuthService } from '../../services/auth-service.service';
 
 @Component({
   selector: 'app-register',
   templateUrl: './register.component.html',
   styleUrls: ['./register.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, HttpClientModule]
+  imports: [CommonModule, RouterLink, FormsModule, HttpClientModule],
+  providers: [provideHttpClient(), AuthService]
 })
 export class RegisterComponent {
   registerData = {
@@ -24,7 +26,7 @@ export class RegisterComponent {
   errorMessage = '';
   isSubmitting = false;
 
-  constructor(private http: HttpClient, private router: Router) {}
+  constructor(private authService: AuthService, private router: Router) {}
 
   onSubmit() {
     // Reset error message
@@ -53,11 +55,10 @@ export class RegisterComponent {
       password: this.registerData.password
     };
     
-    // Call the API
-    this.http.post('/api/auth/register', userData)
+    // Call the auth service
+    this.authService.register(userData)
       .subscribe({
-        next: (response: any) => {
-          console.log('Registration successful', response);
+        next: () => {
           this.isSubmitting = false;
           
           // Navigate to login page
@@ -69,7 +70,6 @@ export class RegisterComponent {
           });
         },
         error: (error) => {
-          console.error('Registration failed', error);
           this.isSubmitting = false;
           
           // Handle API errors
