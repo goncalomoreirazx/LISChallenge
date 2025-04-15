@@ -1,0 +1,8 @@
+/* Ensure the footer stays at the bottom */
+.min-vh-100 {
+    min-height: 100vh;
+  }
+  
+  main {
+    flex: 1;
+  }
