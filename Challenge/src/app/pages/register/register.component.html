@@ -1,0 +1,110 @@
+<div class="container-fluid">
+    <div class="row vh-100">
+      <!-- Left side - Brand information -->
+      <div class="col-md-6 bg-primary d-none d-md-flex align-items-center justify-content-center text-white">
+        <div class="text-center p-5">
+          <h1 class="display-2 fw-bold mb-3">Join Us Today!</h1>
+          <p class="lead">Create an account to get started with our dashboard application.</p>
+          <div class="mt-5">
+            <img src="https://via.placeholder.com/400x300" alt="Register illustration" class="img-fluid rounded shadow">
+          </div>
+        </div>
+      </div>
+      
+      <!-- Right side - Registration form -->
+      <div class="col-md-6 d-flex align-items-center justify-content-center">
+        <div class="card shadow-lg border-0 rounded-lg mt-5 w-75">
+          <div class="card-header bg-primary text-white">
+            <h3 class="text-center font-weight-bold my-2">Create Account</h3>
+          </div>
+          <div class="card-body">
+            <form (ngSubmit)="onSubmit()" #registerForm="ngForm">
+              <!-- Full Name input -->
+              <div class="mb-3">
+                <label for="fullName" class="form-label">Full Name</label>
+                <input 
+                  type="text" 
+                  class="form-control" 
+                  id="fullName" 
+                  name="fullName"
+                  [(ngModel)]="registerData.fullName"
+                  required
+                  placeholder="Enter your full name">
+              </div>
+              
+              <!-- Email input -->
+              <div class="mb-3">
+                <label for="email" class="form-label">Email</label>
+                <input 
+                  type="email" 
+                  class="form-control" 
+                  id="email" 
+                  name="email"
+                  [(ngModel)]="registerData.email"
+                  required
+                  email
+                  placeholder="Enter your email">
+              </div>
+              
+              <!-- Password input -->
+              <div class="mb-3">
+                <label for="password" class="form-label">Password</label>
+                <input 
+                  type="password" 
+                  class="form-control" 
+                  id="password" 
+                  name="password"
+                  [(ngModel)]="registerData.password"
+                  required
+                  placeholder="Enter a strong password">
+                <small class="form-text text-muted">Password must be at least 8 characters long.</small>
+              </div>
+              
+              <!-- Confirm Password input -->
+              <div class="mb-3">
+                <label for="confirmPassword" class="form-label">Confirm Password</label>
+                <input 
+                  type="password" 
+                  class="form-control" 
+                  id="confirmPassword" 
+                  name="confirmPassword"
+                  [(ngModel)]="registerData.confirmPassword"
+                  required
+                  placeholder="Confirm your password">
+              </div>
+              
+              <!-- Terms and conditions -->
+              <div class="mb-3 form-check">
+                <input 
+                  type="checkbox" 
+                  class="form-check-input" 
+                  id="acceptTerms" 
+                  name="acceptTerms"
+                  [(ngModel)]="registerData.acceptTerms"
+                  required>
+                <label class="form-check-label" for="acceptTerms">
+                  I agree to the <a href="#" class="text-decoration-none">Terms and Conditions</a>
+                </label>
+              </div>
+              
+              <!-- Submit button -->
+              <div class="d-grid gap-2 mb-3">
+                <button 
+                  type="submit" 
+                  class="btn btn-primary btn-lg" 
+                  [disabled]="!registerForm.form.valid">
+                  Register
+                </button>
+              </div>
+              
+              <!-- Login link -->
+              <div class="text-center">
+                <span>Already have an account? </span>
+                <a routerLink="/login" class="text-decoration-none">Sign in</a>
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

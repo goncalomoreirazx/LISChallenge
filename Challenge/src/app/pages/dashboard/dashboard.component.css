@@ -1,0 +1,63 @@
+.dashboard-container {
+    display: flex;
+  }
+  
+  .content-area {
+    flex: 1;
+    margin-left: 250px;
+    transition: all 0.3s;
+    min-height: 100vh;
+    background-color: #f8f9fa;
+  }
+  
+  .navbar {
+    border-radius: 0;
+  }
+  
+  .card {
+    border: none;
+    border-radius: 10px;
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
+    transition: transform 0.3s;
+  }
+  
+  .card:hover {
+    transform: translateY(-5px);
+  }
+  
+  .chart-container {
+    width: 100%;
+    background-color: #fff;
+  }
+  
+  /* Responsive adjustments */
+  @media (max-width: 767.98px) {
+    .content-area {
+      margin-left: 0 !important;
+    }
+    
+    .card:hover {
+      transform: none;
+    }
+  }
+  
+  /* Subtle background colors for stat cards */
+  .bg-primary-subtle {
+    background-color: rgba(13, 110, 253, 0.15);
+  }
+  
+  .bg-success-subtle {
+    background-color: rgba(25, 135, 84, 0.15);
+  }
+  
+  .bg-info-subtle {
+    background-color: rgba(13, 202, 240, 0.15);
+  }
+  
+  .bg-warning-subtle {
+    background-color: rgba(255, 193, 7, 0.15);
+  }
+  
+  .bg-danger-subtle {
+    background-color: rgba(220, 53, 69, 0.15);
+  }

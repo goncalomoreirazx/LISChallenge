@@ -1,7 +1,84 @@
-/* You can add global styles to this file, and also import other style files */
-/* You can add global styles to this file, and also import other style files */
-/* Bootstrap is imported in index.html */
-
+/* Global styles */
 body {
     font-family: 'Roboto', sans-serif;
+    background-color: #f8f9fa;
+    margin: 0;
+    padding: 0;
+  }
+  
+  /* Add smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+  
+  /* Enhance focus styles for accessibility */
+  :focus {
+    outline: 2px solid #0d6efd;
+    outline-offset: 2px;
+  }
+  
+  /* Custom shadows */
+  .shadow-sm {
+    box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075) !important;
+  }
+  
+  .shadow {
+    box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+  }
+  
+  .shadow-lg {
+    box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.175) !important;
+  }
+  
+  /* Custom transitions */
+  .transition-all {
+    transition: all 0.3s ease;
+  }
+  
+  /* Hover effects */
+  .hover-lift {
+    transition: transform 0.3s;
+  }
+  
+  .hover-lift:hover {
+    transform: translateY(-5px);
+  }
+  
+  /* Custom button styling */
+  .btn {
+    border-radius: 0.375rem;
+    padding: 0.5rem 1rem;
+    transition: all 0.3s;
+  }
+  
+  .btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  /* Form control styling */
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  
+  /* Media query helpers */
+  @media (max-width: 767.98px) {
+    .mobile-only {
+      display: block !important;
+    }
+    
+    .desktop-only {
+      display: none !important;
+    }
+  }
+  
+  @media (min-width: 768px) {
+    .mobile-only {
+      display: none !important;
+    }
+    
+    .desktop-only {
+      display: block !important;
+    }
   }
