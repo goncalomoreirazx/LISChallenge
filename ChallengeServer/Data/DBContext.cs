@@ -53,17 +53,17 @@ namespace ChallengeServer.Data
                 .Property(p => p.Budget)
                 .HasColumnType("decimal(18,2)");
 
-            modelBuilder.Entity<ProjectProgrammer>()
+             modelBuilder.Entity<ProjectProgrammer>()
                 .HasOne(pp => pp.Project)
                 .WithMany()
                 .HasForeignKey(pp => pp.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
-        
-            modelBuilder.Entity<ProjectProgrammer>()
+            
+             modelBuilder.Entity<ProjectProgrammer>()
                 .HasOne(pp => pp.Programmer)
                 .WithMany()
                 .HasForeignKey(pp => pp.ProgrammerId)
                 .OnDelete(DeleteBehavior.Restrict);
-        }
+                }
     }
 }

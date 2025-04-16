@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { Observable, catchError, throwError } from 'rxjs';
+import { Observable, catchError, throwError, tap } from 'rxjs';
 import { environment } from '../environment/environment';
 import { AuthService, User } from './auth-service.service';
 
@@ -149,6 +149,9 @@ getProjectProgrammers(id: number): Observable<any[]> {
  */
 allocateProgrammers(id: number, programmerIds: number[]): Observable<any> {
   return this.http.post<any>(`${this.apiUrl}/${id}/programmers`, programmerIds).pipe(
+    tap(response => {
+      console.log(`Successfully allocated programmers to project ${id}:`, response);
+    }),
     catchError(error => {
       console.error(`Error allocating programmers to project ${id}:`, error);
       return throwError(() => error);

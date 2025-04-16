@@ -254,68 +254,84 @@ public async Task<ActionResult<Project>> CreateProject(CreateProjectDto projectD
 
 
         [HttpPost("{id}/programmers")]
-[Authorize(Policy = "ProjectManager")]
-public async Task<IActionResult> AllocateProgrammers(int id, [FromBody] List<int> programmerIds)
-{
-    try
-    {
-        // Get current user ID from claims
-        var userId = User.FindFirstValue("Id");
-        if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
+        [Authorize(Policy = "ProjectManager")]
+        public async Task<IActionResult> AllocateProgrammers(int id, [FromBody] List<int> programmerIds)
         {
-            return Unauthorized(new { message = "User not authenticated properly" });
-        }
-
-        // Validate the project exists and belongs to this manager
-        var project = await _context.Projects.FindAsync(id);
-        if (project == null)
-        {
-            return NotFound(new { message = "Project not found" });
-        }
-
-        if (project.ManagerId != currentUserId)
-        {
-            return Forbid();
-        }
-
-        // Validate all programmers exist and are of type 'Programmer' (type 2)
-        var programmers = await _context.Users
-            .Where(u => programmerIds.Contains(u.Id) && u.UserType == 2)
-            .ToListAsync();
-
-        if (programmers.Count != programmerIds.Count)
-        {
-            return BadRequest(new { message = "One or more selected users are not valid programmers" });
-        }
-
-        // Remove existing allocations
-        var existingAllocations = await _context.ProjectProgrammers
-            .Where(pp => pp.ProjectId == id)
-            .ToListAsync();
-            
-        _context.ProjectProgrammers.RemoveRange(existingAllocations);
-
-        // Add new allocations
-        foreach (var programmerId in programmerIds)
-        {
-            _context.ProjectProgrammers.Add(new ProjectProgrammer
+            try
             {
-                ProjectId = id,
-                ProgrammerId = programmerId,
-                AllocationDate = DateTime.UtcNow
-            });
+                // Get current user ID from claims
+                var userId = User.FindFirstValue("Id");
+                if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
+                {
+                    return Unauthorized(new { message = "User not authenticated properly" });
+                }
+
+                // Validate the project exists and belongs to this manager
+                var project = await _context.Projects.FindAsync(id);
+                if (project == null)
+                {
+                    return NotFound(new { message = "Project not found" });
+                }
+
+                if (project.ManagerId != currentUserId)
+                {
+                    return Forbid();
+                }
+
+                // Make sure programmerIds is not null
+                if (programmerIds == null)
+                {
+                    return BadRequest(new { message = "No programmers provided" });
+                }
+
+                // Validate all programmers exist and are of type 'Programmer' (type 2)
+                var programmers = await _context.Users
+                    .Where(u => programmerIds.Contains(u.Id) && u.UserType == 2)
+                    .ToListAsync();
+
+                if (programmers.Count != programmerIds.Count)
+                {
+                    return BadRequest(new { message = "One or more selected users are not valid programmers" });
+                }
+
+                // Remove existing allocations
+                var existingAllocations = await _context.ProjectProgrammers
+                    .Where(pp => pp.ProjectId == id)
+                    .ToListAsync();
+                    
+                if (existingAllocations.Any())
+                {
+                    _context.ProjectProgrammers.RemoveRange(existingAllocations);
+                    await _context.SaveChangesAsync();
+                }
+
+                // Add new allocations
+                var newAllocations = new List<ProjectProgrammer>();
+                foreach (var programmerId in programmerIds)
+                {
+                    newAllocations.Add(new ProjectProgrammer
+                    {
+                        ProjectId = id,
+                        ProgrammerId = programmerId,
+                        AllocationDate = DateTime.UtcNow
+                    });
+                }
+
+                _context.ProjectProgrammers.AddRange(newAllocations);
+                await _context.SaveChangesAsync();
+
+                return Ok(new { message = "Programmers allocated successfully" });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error allocating programmers to project with ID {ProjectId}: {ErrorMessage}", id, ex.Message);
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError("Inner exception: {InnerErrorMessage}", ex.InnerException.Message);
+                }
+                return StatusCode(500, new { message = "Internal server error" });
+            }
         }
-
-        await _context.SaveChangesAsync();
-
-        return Ok(new { message = "Programmers allocated successfully" });
-    }
-    catch (Exception ex)
-    {
-        _logger.LogError(ex, "Error allocating programmers to project with ID {ProjectId}", id);
-        return StatusCode(500, new { message = "Internal server error" });
-    }
-}
 
 // Also add a GET endpoint to view allocated programmers
 [HttpGet("{id}/programmers")]
