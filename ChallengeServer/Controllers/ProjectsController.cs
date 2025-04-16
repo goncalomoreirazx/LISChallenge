@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ChallengeServer.Data;
 using ChallengeServer.Models;
 using System.Security.Claims;
+using ChallengeServer.DTOs;
 
 namespace ChallengeServer.Controllers
 {
