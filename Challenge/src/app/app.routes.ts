@@ -3,6 +3,9 @@ import { LoginComponent } from '../app/pages/login/login.component';
 import { RegisterComponent } from '../app/pages/register/register.component';
 import { DashboardComponent } from '../app/pages/dashboard/dashboard.component';
 import { AuthGuard } from './guard/auth-guard.guard';
+import { ProjectsComponent } from './pages/projects/projects.component';
+import { ProjectListComponent } from './components/dashboard/project-list/project-list.component';
+import { ProjectDetailComponent } from './components/dashboard/project-details/project-details.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -22,9 +25,19 @@ export const routes: Routes = [
   },
   { 
     path: 'projectos', // Project Manager specific route
-    component: DashboardComponent,
+    component: ProjectsComponent,
     canActivate: [AuthGuard],
-    data: { requiredUserType: 1 } // 1 = Project Manager
+    data: { requiredUserType: 1 }, // 1 = Project Manager
+    children: [
+      {
+        path: '',
+        component: ProjectListComponent
+      },
+      {
+        path: ':id',
+        component: ProjectDetailComponent
+      }
+    ]
   },
   { 
     path: 'tarefas', // Programmer specific route

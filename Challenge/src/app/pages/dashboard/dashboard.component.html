@@ -96,7 +96,59 @@
           </div>
         </div>
       </div>
-      
+      <!-- Projects Row (Only for Project Managers) -->
+      <div class="row mb-4" *ngIf="authService.isProjectManager()">
+        <div class="col-12">
+          <div class="card h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+              <h5 class="card-title mb-0">My Projects</h5>
+              <button class="btn btn-sm btn-primary" routerLink="/projectos">
+                <i class="bi bi-folder me-1"></i> View All Projects
+              </button>
+            </div>
+            <div class="card-body p-0">
+              <div *ngIf="loading" class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading projects...</span>
+                </div>
+                <p class="mt-2">Loading your projects...</p>
+              </div>
+              
+              <div *ngIf="projects.length === 0 && !loading" class="text-center p-4">
+                <i class="bi bi-folder text-muted fs-1"></i>
+                <p class="mt-2">No projects found.</p>
+                <button class="btn btn-primary" routerLink="/projectos">Create your first project</button>
+              </div>
+              
+              <div *ngIf="projects.length > 0" class="table-responsive">
+                <table class="table table-hover">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Budget</th>
+                      <th>Created</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr *ngFor="let project of projects">
+                      <td>{{ project.name }}</td>
+                      <td>{{ project.budget ? '$' + project.budget.toLocaleString() : 'N/A' }}</td>
+                      <td>{{ formatDate(project.createdAt) }}</td>
+                      <td>
+                        <button class="btn btn-sm btn-outline-primary me-1" [routerLink]="['/projectos', project.id]">
+                          <i class="bi bi-eye"></i>
+                        </button>
+                      </td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Activity and tasks row -->
       <div class="row">
         <!-- Recent activity -->

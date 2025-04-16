@@ -18,24 +18,21 @@ export class SidebarComponent implements OnInit {
   
   isCollapsed = false;
   isMobile = false;
-  isBrowser: boolean;
   
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
     private authService: AuthService
-  ) {
-    this.isBrowser = isPlatformBrowser(this.platformId);
-  }
+  ) {}
   
   @HostListener('window:resize', ['$event'])
   onResize(event: any) {
-    if (this.isBrowser) {
+    if (isPlatformBrowser(this.platformId)) {
       this.checkScreenSize();
     }
   }
   
   ngOnInit() {
-    if (this.isBrowser) {
+    if (isPlatformBrowser(this.platformId)) {
       this.checkScreenSize();
     } else {
       // Default values for server-side rendering
@@ -96,7 +93,7 @@ export class SidebarComponent implements OnInit {
   }
   
   checkScreenSize() {
-    if (this.isBrowser) {
+    if (isPlatformBrowser(this.platformId)) {
       this.isMobile = window.innerWidth < 768;
       // Auto-collapse sidebar on mobile
       if (this.isMobile) {
@@ -116,6 +113,12 @@ export class SidebarComponent implements OnInit {
     if (this.isMobile) {
       this.isCollapsed = true;
       this.sidebarStateChanged.emit(this.isCollapsed);
+    }
+  }
+  
+  logout() {
+    if (isPlatformBrowser(this.platformId)) {
+      this.authService.logout();
     }
   }
 }

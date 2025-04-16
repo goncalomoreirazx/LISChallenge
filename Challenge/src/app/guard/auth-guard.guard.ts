@@ -8,8 +8,8 @@ import { isPlatformBrowser } from '@angular/common';
 })
 export class AuthGuard implements CanActivate {
   private platformId = inject(PLATFORM_ID);
-  
-  constructor(private authService: AuthService, private router: Router) {}
+  private authService = inject(AuthService);
+  private router = inject(Router);
 
   canActivate(
     route: ActivatedRouteSnapshot,
@@ -48,7 +48,7 @@ export class AuthGuard implements CanActivate {
   }
 }
 
-// Factory function for Angular 15+ route guard compatibility
+// Factory function for Angular route guard compatibility
 export const authGuard: CanActivateFn = (route, state) => {
   return inject(AuthGuard).canActivate(route, state);
 };

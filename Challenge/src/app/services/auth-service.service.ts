@@ -1,9 +1,10 @@
-import { Injectable } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError } from 'rxjs';
 import { tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../environment/environment';
+import { isPlatformBrowser } from '@angular/common';
 
 export interface User {
   id: number;
@@ -27,21 +28,28 @@ export class AuthService {
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
 
-  constructor(private http: HttpClient, private router: Router) { 
+  constructor(
+    private http: HttpClient, 
+    private router: Router,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) { 
     // Check if user is already logged in
     this.loadStoredUser();
   }
 
   private loadStoredUser(): void {
-    // Try to get user from localStorage, then sessionStorage
-    const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
-    if (userData) {
-      try {
-        const user = JSON.parse(userData);
-        this.currentUserSubject.next(user);
-      } catch (error) {
-        console.error('Error parsing stored user data', error);
-        this.logout();
+    // Only attempt to load from storage in browser context
+    if (isPlatformBrowser(this.platformId)) {
+      // Try to get user from localStorage, then sessionStorage
+      const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+      if (userData) {
+        try {
+          const user = JSON.parse(userData);
+          this.currentUserSubject.next(user);
+        } catch (error) {
+          console.error('Error parsing stored user data', error);
+          this.logout();
+        }
       }
     }
   }
@@ -55,7 +63,10 @@ export class AuthService {
   }
 
   public getToken(): string | null {
-    return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    if (isPlatformBrowser(this.platformId)) {
+      return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    }
+    return null;
   }
 
   register(userData: {
@@ -77,10 +88,13 @@ export class AuthService {
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
       .pipe(
         tap(response => {
-          // Store token and user data
-          const storage = rememberMe ? localStorage : sessionStorage;
-          storage.setItem('auth_token', response.token);
-          storage.setItem('user_data', JSON.stringify(response.user));
+          // Only store in browser storage when in browser context
+          if (isPlatformBrowser(this.platformId)) {
+            // Store token and user data
+            const storage = rememberMe ? localStorage : sessionStorage;
+            storage.setItem('auth_token', response.token);
+            storage.setItem('user_data', JSON.stringify(response.user));
+          }
           this.currentUserSubject.next(response.user);
         }),
         catchError(error => {
@@ -91,30 +105,27 @@ export class AuthService {
   }
 
   logout(): void {
-    // Remove user from local storage and set current user to null
-    localStorage.removeItem('auth_token');
-    localStorage.removeItem('user_data');
-    sessionStorage.removeItem('auth_token');
-    sessionStorage.removeItem('user_data');
+    // Only clear browser storage when in browser context
+    if (isPlatformBrowser(this.platformId)) {
+      // Remove user from local storage and set current user to null
+      localStorage.removeItem('auth_token');
+      localStorage.removeItem('user_data');
+      sessionStorage.removeItem('auth_token');
+      sessionStorage.removeItem('user_data');
+    }
     this.currentUserSubject.next(null);
     this.router.navigate(['/login']);
   }
 
-  // Check if user is a project manager - add debugging
+  // Check if user is a project manager
   isProjectManager(): boolean {
     const user = this.currentUserValue;
-    console.log('isProjectManager checking user:', user);
-    const result = user ? user.userType === 1 : false;
-    console.log('isProjectManager result:', result);
-    return result;
+    return user ? user.userType === 1 : false;
   }
 
-  // Check if user is a programmer - add debugging
+  // Check if user is a programmer
   isProgrammer(): boolean {
     const user = this.currentUserValue;
-    console.log('isProgrammer checking user:', user);
-    const result = user ? user.userType === 2 : false;
-    console.log('isProgrammer result:', result);
-    return result;
+    return user ? user.userType === 2 : false;
   }
 }

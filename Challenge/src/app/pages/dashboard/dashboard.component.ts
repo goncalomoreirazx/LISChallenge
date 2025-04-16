@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SidebarComponent } from '../../components/dashboard/sidebar/sidebar.component';
 import { AuthService, User } from '../../services/auth-service.service';
+import { ProjectService, Project } from '../../services/project.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -17,6 +18,10 @@ export class DashboardComponent implements OnInit {
   
   // Current logged in user
   currentUser: User | null = null;
+  
+  // Projects for Project Managers
+  projects: Project[] = [];
+  loading = false;
   
   // Sample data for dashboard cards
   stats = [
@@ -35,7 +40,10 @@ export class DashboardComponent implements OnInit {
     { id: 5, action: 'New comment received', user: 'Charlie Davis', time: '3 hours ago' }
   ];
   
-  constructor(private authService: AuthService) {}
+  constructor(
+    public authService: AuthService,
+    private projectService: ProjectService
+  ) {}
   
   ngOnInit() {
     // Get the current user
@@ -45,12 +53,43 @@ export class DashboardComponent implements OnInit {
     this.authService.currentUser$.subscribe(user => {
       this.currentUser = user;
     });
+    
+    // Load projects if user is a project manager
+    if (this.authService.isProjectManager()) {
+      this.loadProjects();
+    }
+  }
+  
+  // Load projects for project managers
+  loadProjects() {
+    this.loading = true;
+    
+    this.projectService.getProjects().subscribe({
+      next: (data) => {
+        // Get only the first 5 projects for the dashboard
+        this.projects = data.slice(0, 5);
+        this.loading = false;
+      },
+      error: (err) => {
+        console.error('Error loading projects for dashboard', err);
+        this.loading = false;
+      }
+    });
   }
   
   // Receive sidebar state changes - handle the event with correct typing
   onSidebarStateChanged(event: any) {
     // The event is the isCollapsed boolean value from the sidebar
     this.sidebarCollapsed = Boolean(event);
+  }
+  
+  // Format date for display
+  formatDate(dateString: string): string {
+    return new Date(dateString).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
   }
   
   logout() {
