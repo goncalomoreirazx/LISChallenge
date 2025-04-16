@@ -32,6 +32,10 @@ namespace ChallengeServer.Models
         // Navigation property for the manager (Project Manager)
         [ForeignKey("ManagerId")]
         public User Manager { get; set; } = null!;
+
+        // In the Project model:
+        [NotMapped]
+        public ICollection<User> AssignedProgrammers { get; set; } = new List<User>();
         
         // Navigation property for tasks related to this project
         public ICollection<ProjectTask> Tasks { get; set; } = new List<ProjectTask>();

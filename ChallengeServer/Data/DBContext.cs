@@ -13,6 +13,7 @@ namespace ChallengeServer.Data
         public DbSet<UserType> UserTypes { get; set; }
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTask> Tasks { get; set; }
+        public DbSet<ProjectProgrammer> ProjectProgrammers { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -46,6 +47,18 @@ namespace ChallengeServer.Data
                 .WithOne(t => t.Project)
                 .HasForeignKey(t => t.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<ProjectProgrammer>()
+                .HasOne(pp => pp.Project)
+                .WithMany()
+                .HasForeignKey(pp => pp.ProjectId)
+                .OnDelete(DeleteBehavior.Cascade);
+        
+            modelBuilder.Entity<ProjectProgrammer>()
+                .HasOne(pp => pp.Programmer)
+                .WithMany()
+                .HasForeignKey(pp => pp.ProgrammerId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }
