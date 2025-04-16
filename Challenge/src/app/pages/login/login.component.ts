@@ -68,10 +68,20 @@ export class LoginComponent implements OnInit {
     ).subscribe({
       next: (response) => {
         this.isSubmitting = false;
-        console.log('Login successful, navigating to dashboard');
+        console.log('Login successful, token received:', !!response.token);
+        console.log('User data:', response.user);
         
-        // Navigate to dashboard
-        this.router.navigate(['/dashboard']);
+        // Check if token was stored successfully
+        const tokenStored = !!this.authService.getToken();
+        console.log('Token stored successfully:', tokenStored);
+        
+        if (tokenStored) {
+          // Navigate to dashboard
+          this.router.navigate(['/dashboard']);
+        } else {
+          // Handle token storage failure
+          this.errorMessage = 'Failed to store authentication token. Please try again or contact support.';
+        }
       },
       error: (error) => {
         this.isSubmitting = false;

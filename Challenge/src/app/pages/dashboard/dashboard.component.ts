@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SidebarComponent } from '../../components/dashboard/sidebar/sidebar.component';
 import { AuthService, User } from '../../services/auth-service.service';
@@ -42,21 +42,24 @@ export class DashboardComponent implements OnInit {
   
   constructor(
     public authService: AuthService,
-    private projectService: ProjectService
+    private projectService: ProjectService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
   
   ngOnInit() {
-    // Get the current user
-    this.currentUser = this.authService.currentUserValue;
-    
-    // Subscribe to user changes (in case user data changes during the session)
-    this.authService.currentUser$.subscribe(user => {
-      this.currentUser = user;
-    });
-    
-    // Load projects if user is a project manager
-    if (this.authService.isProjectManager()) {
-      this.loadProjects();
+    if (isPlatformBrowser(this.platformId)) {
+      // Get the current user
+      this.currentUser = this.authService.currentUserValue;
+      
+      // Subscribe to user changes (in case user data changes during the session)
+      this.authService.currentUser$.subscribe(user => {
+        this.currentUser = user;
+      });
+      
+      // Load projects if user is a project manager
+      if (this.authService.isProjectManager()) {
+        this.loadProjects();
+      }
     }
   }
   

@@ -10,7 +10,7 @@ import { AuthService } from '../../../services/auth-service.service';
   templateUrl: './project-details.component.html',
   styleUrls: ['./project-details.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule]
+  imports: [CommonModule, FormsModule]
 })
 export class ProjectDetailComponent implements OnInit {
   projectId!: number;

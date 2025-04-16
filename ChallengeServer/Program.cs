@@ -51,6 +51,9 @@ builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 // Configure Authentication
+// ChallengeServer/Program.cs - JWT Configuration
+
+// Configure Authentication
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
     {
@@ -64,6 +67,29 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"] ?? throw new Exception("JWT Key is not configured")))
+        };
+
+        // Add event handlers for more detailed logging
+        options.Events = new JwtBearerEvents
+        {
+            OnAuthenticationFailed = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogError("Authentication failed: {Exception}", context.Exception);
+                return Task.CompletedTask;
+            },
+            OnTokenValidated = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogInformation("Token validated successfully");
+                return Task.CompletedTask;
+            },
+            OnChallenge = context =>
+            {
+                var logger = context.HttpContext.RequestServices.GetRequiredService<ILogger<Program>>();
+                logger.LogWarning("Authorization challenge issued for request to {Path}", context.Request.Path);
+                return Task.CompletedTask;
+            }
         };
     });
 

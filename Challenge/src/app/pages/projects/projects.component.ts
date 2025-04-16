@@ -10,7 +10,7 @@ import { AuthService } from '../../services/auth-service.service';
   templateUrl: './projects.component.html',
   styleUrls: ['./projects.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterOutlet, SidebarComponent, ProjectListComponent]
+  imports: [CommonModule, RouterOutlet, SidebarComponent]
 })
 export class ProjectsComponent implements OnInit {
   // Track sidebar collapsed state
