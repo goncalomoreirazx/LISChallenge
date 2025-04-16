@@ -19,7 +19,7 @@ namespace ChallengeServer.Services
         {
             var issuer = _configuration["Jwt:Issuer"];
             var audience = _configuration["Jwt:Audience"];
-            var key = Encoding.ASCII.GetBytes(_configuration["Jwt:Key"] ?? throw new Exception("JWT Key is not configured"));
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"] ?? throw new Exception("JWT Key is not configured"));
             
             var tokenDescriptor = new SecurityTokenDescriptor
             {
@@ -36,7 +36,7 @@ namespace ChallengeServer.Services
                 Audience = audience,
                 SigningCredentials = new SigningCredentials(
                     new SymmetricSecurityKey(key),
-                    SecurityAlgorithms.HmacSha512Signature)
+                    SecurityAlgorithms.HmacSha256Signature) // Changed to HmacSha256Signature for compatibility
             };
             
             var tokenHandler = new JwtSecurityTokenHandler();

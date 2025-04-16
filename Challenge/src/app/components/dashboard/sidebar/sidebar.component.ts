@@ -1,4 +1,4 @@
-import { Component, HostListener, Inject, PLATFORM_ID, Output, EventEmitter } from '@angular/core';
+import { Component, HostListener, Inject, PLATFORM_ID, Output, EventEmitter, OnInit } from '@angular/core';
 import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { AuthService } from '../../../services/auth-service.service';
@@ -10,34 +10,32 @@ import { AuthService } from '../../../services/auth-service.service';
   standalone: true,
   imports: [CommonModule, RouterLink, RouterLinkActive]
 })
-export class SidebarComponent {
+export class SidebarComponent implements OnInit {
   @Output() sidebarStateChanged = new EventEmitter<boolean>();
   
-  menuItems = [
-    { icon: 'bi bi-speedometer2', label: 'Dashboard', link: '/dashboard' },
-    { icon: 'bi bi-person', label: 'Profile', link: '/profile' },
-    { icon: 'bi bi-bar-chart', label: 'Projectos', link: '/projectos' },
-    { icon: 'bi bi-gear', label: 'Tarefas', link: '/tarefas' },
-    { icon: 'bi bi-question-circle', label: 'Help', link: '/help' }
-  ];
+  // Combined menu items based on user role
+  menuItems: any[] = [];
   
   isCollapsed = false;
   isMobile = false;
+  isBrowser: boolean;
   
   constructor(
     @Inject(PLATFORM_ID) private platformId: Object,
     private authService: AuthService
-  ) {}
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+  }
   
   @HostListener('window:resize', ['$event'])
   onResize(event: any) {
-    if (isPlatformBrowser(this.platformId)) {
+    if (this.isBrowser) {
       this.checkScreenSize();
     }
   }
   
   ngOnInit() {
-    if (isPlatformBrowser(this.platformId)) {
+    if (this.isBrowser) {
       this.checkScreenSize();
     } else {
       // Default values for server-side rendering
@@ -47,10 +45,58 @@ export class SidebarComponent {
     
     // Emit initial state
     this.sidebarStateChanged.emit(this.isCollapsed);
+    
+    // Set up menu items based on user role
+    this.setupMenuItems();
+    
+    // Subscribe to auth changes to update menu when user logs in/out
+    this.authService.currentUser$.subscribe(() => {
+      this.setupMenuItems();
+    });
+  }
+  
+  private setupMenuItems() {
+    // Get the current user
+    const user = this.authService.currentUserValue;
+    
+    // Create base menu with common items
+    this.menuItems = [
+      { icon: 'bi bi-speedometer2', label: 'Dashboard', link: '/dashboard' },
+      { icon: 'bi bi-person', label: 'Profile', link: '/profile' },
+      { icon: 'bi bi-question-circle', label: 'Help', link: '/help' }
+    ];
+    
+    // Only add Projects for Project Managers (type 1)
+    if (user && user.userType === 1) {
+      this.menuItems.push(
+        { icon: 'bi bi-bar-chart', label: 'Projectos', link: '/projectos' }
+      );
+    }
+    
+    // Only add Tasks for Programmers (type 2)
+    if (user && user.userType === 2) {
+      this.menuItems.push(
+        { icon: 'bi bi-gear', label: 'Tarefas', link: '/tarefas' }
+      );
+    }
+    
+    // Sort menu items by predefined order
+    this.menuItems.sort((a, b) => {
+      // Custom order: Dashboard, Profile, Projectos, Tarefas, Help
+      const order: Record<string, number> = {
+        'Dashboard': 1,
+        'Profile': 2,
+        'Projectos': 3,
+        'Tarefas': 4,
+        'Help': 5
+      };
+      
+      return (order[a.label as string] || 99) - (order[b.label as string] || 99);
+    });
   }
   
   checkScreenSize() {
-    if (isPlatformBrowser(this.platformId)) {
+    if (this.isBrowser) {
       this.isMobile = window.innerWidth < 768;
       // Auto-collapse sidebar on mobile
       if (this.isMobile) {
@@ -71,9 +117,5 @@ export class SidebarComponent {
       this.isCollapsed = true;
       this.sidebarStateChanged.emit(this.isCollapsed);
     }
-  }
-  
-  logout() {
-    this.authService.logout();
   }
 }
