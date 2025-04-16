@@ -93,7 +93,13 @@ createProject(project: Omit<Project, 'id' | 'createdAt' | 'managerId'>): Observa
    */
   updateProject(id: number, project: Partial<Omit<Project, 'id' | 'createdAt' | 'managerId'>>): Observable<void> {
     console.log(`Updating project ${id}:`, project);
-    return this.http.put<void>(`${this.apiUrl}/${id}`, project).pipe(
+    // Send only the fields that should be updated
+    const updatedFields = {
+      name: project.name,
+      description: project.description,
+      budget: project.budget
+    };
+    return this.http.put<void>(`${this.apiUrl}/${id}`, updatedFields).pipe(
       catchError(error => {
         console.error(`Error updating project ${id}:`, error);
         return throwError(() => error);

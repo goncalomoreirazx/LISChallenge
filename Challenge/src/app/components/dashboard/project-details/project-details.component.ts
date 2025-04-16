@@ -145,20 +145,18 @@ export class ProjectDetailComponent implements OnInit {
       this.formError = 'Project name is required';
       return;
     }
-
+  
     this.isSubmitting = true;
     this.formError = null;
     
-    // Convert budget to number if it's a string
-    let projectToSubmit = {
-      ...this.editedProject
+    // Create a clean object with only the fields to update
+    const projectToUpdate = {
+      name: this.editedProject.name.trim(),
+      description: this.editedProject.description,
+      budget: this.editedProject.budget
     };
-    
-    if (typeof projectToSubmit.budget === 'string') {
-      projectToSubmit.budget = projectToSubmit.budget ? parseFloat(projectToSubmit.budget as unknown as string) : null;
-    }
-
-    this.projectService.updateProject(this.projectId, projectToSubmit).subscribe({
+  
+    this.projectService.updateProject(this.projectId, projectToUpdate).subscribe({
       next: () => {
         // Exit edit mode and reload project
         this.isEditing = false;
@@ -167,7 +165,15 @@ export class ProjectDetailComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.formError = err.error?.message || 'Failed to update project. Please try again.';
+        if (err.error?.message) {
+          this.formError = err.error.message;
+        } else if (err.error?.errors) {
+          // Handle validation errors
+          const firstError = err.error.errors[0];
+          this.formError = `${firstError.field}: ${firstError.errors[0]}`;
+        } else {
+          this.formError = 'Failed to update project. Please try again.';
+        }
         console.error('Error updating project', err);
       }
     });

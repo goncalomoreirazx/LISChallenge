@@ -159,16 +159,11 @@ public async Task<ActionResult<Project>> CreateProject(CreateProjectDto projectD
     }
 }
 
-        // PUT: api/projects/{id}
+       // PUT: api/projects/{id}
         [HttpPut("{id}")]
         [Authorize(Policy = "ProjectManager")]
-        public async Task<IActionResult> UpdateProject(int id, Project project)
+        public async Task<IActionResult> UpdateProject(int id, [FromBody] CreateProjectDto projectDto)
         {
-            if (id != project.Id)
-            {
-                return BadRequest(new { message = "ID mismatch" });
-            }
-
             try
             {
                 // Get current user ID from claims
@@ -192,13 +187,9 @@ public async Task<ActionResult<Project>> CreateProject(CreateProjectDto projectD
                 }
 
                 // Update only allowed fields
-                existingProject.Name = project.Name;
-                existingProject.Description = project.Description;
-                existingProject.Budget = project.Budget;
-                
-                // Do not allow changing the manager or creation date
-                // existingProject.ManagerId = existingProject.ManagerId;
-                // existingProject.CreatedAt = existingProject.CreatedAt;
+                existingProject.Name = projectDto.Name;
+                existingProject.Description = projectDto.Description;
+                existingProject.Budget = projectDto.Budget;
 
                 _context.Entry(existingProject).State = EntityState.Modified;
                 await _context.SaveChangesAsync();
