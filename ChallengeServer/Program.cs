@@ -5,7 +5,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ChallengeServer.Data;
 using ChallengeServer.Services;
-using ChallengeServer.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -46,7 +45,7 @@ builder.Services.AddSwaggerGen(c =>
 
 // Configure database connection
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? 
-    "Server=localhost\\SQLEXPRESS;Database=ChallengeDb;Trusted_Connection=True;TrustServerCertificate=True;";
+    "Server=localhost\\SQLEXPRESS;Database=IPNChallenge;Trusted_Connection=True;TrustServerCertificate=True;";
 
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
@@ -84,9 +83,10 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("AllowAngular", builder =>
     {
-        builder.WithOrigins("http://localhost:4200")
+        builder.WithOrigins("http://localhost:4200", "http://localhost:4000")
             .AllowAnyMethod()
-            .AllowAnyHeader();
+            .AllowAnyHeader()
+            .AllowCredentials();
     });
 });
 
@@ -97,16 +97,16 @@ if (app.Environment.IsDevelopment())
 {
     app.UseSwagger();
     app.UseSwaggerUI();
-    
-    // Migration and seeding code removed
 }
 
 app.UseHttpsRedirection();
+
+// Apply CORS middleware before auth middleware
 app.UseCors("AllowAngular");
+
 app.UseAuthentication();
 app.UseAuthorization();
+
 app.MapControllers();
 
 app.Run();
-
-// SeedData method removed

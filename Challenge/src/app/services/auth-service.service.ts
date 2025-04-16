@@ -46,10 +46,13 @@ export class AuthService {
         try {
           const user = JSON.parse(userData);
           this.currentUserSubject.next(user);
+          console.log('User loaded from storage:', user);
         } catch (error) {
           console.error('Error parsing stored user data', error);
           this.logout();
         }
+      } else {
+        console.log('No user data found in storage');
       }
     }
   }
@@ -59,12 +62,17 @@ export class AuthService {
   }
 
   public isLoggedIn(): boolean {
-    return !!this.getToken();
+    const hasToken = this.getToken() !== null;
+    console.log('isLoggedIn check:', hasToken);
+    return hasToken;
   }
 
   public getToken(): string | null {
     if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+      // Log token availability (not the actual token for security)
+      console.log('Token available:', token !== null);
+      return token;
     }
     return null;
   }
@@ -85,9 +93,13 @@ export class AuthService {
   }
 
   login(email: string, password: string, rememberMe: boolean): Observable<LoginResponse> {
-    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password })
+    console.log('Login attempt:', email);
+    
+    return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password, rememberMe })
       .pipe(
         tap(response => {
+          console.log('Login successful, storing user data and token');
+          
           // Only store in browser storage when in browser context
           if (isPlatformBrowser(this.platformId)) {
             // Store token and user data
@@ -105,6 +117,8 @@ export class AuthService {
   }
 
   logout(): void {
+    console.log('Logging out user');
+    
     // Only clear browser storage when in browser context
     if (isPlatformBrowser(this.platformId)) {
       // Remove user from local storage and set current user to null

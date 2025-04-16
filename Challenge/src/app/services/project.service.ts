@@ -1,7 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../environment/environment';
+import { AuthService } from './auth-service.service';
 
 export interface Project {
   id: number;
@@ -18,40 +19,87 @@ export interface Project {
 export class ProjectService {
   private apiUrl = `${environment.apiUrl}/projects`;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
+
+  // Helper to get auth headers (although the interceptor should handle this)
+  private getHeaders(): HttpHeaders {
+    const token = this.authService.getToken();
+    if (token) {
+      return new HttpHeaders({
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      });
+    }
+    return new HttpHeaders({
+      'Content-Type': 'application/json'
+    });
+  }
 
   /**
    * Get all projects accessible to the current user
    */
   getProjects(): Observable<Project[]> {
-    return this.http.get<Project[]>(this.apiUrl);
+    console.log('Fetching projects from:', this.apiUrl);
+    return this.http.get<Project[]>(this.apiUrl).pipe(
+      catchError(error => {
+        console.error('Error fetching projects:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
    * Get a specific project by ID
    */
   getProject(id: number): Observable<Project> {
-    return this.http.get<Project>(`${this.apiUrl}/${id}`);
+    console.log(`Fetching project ${id} from: ${this.apiUrl}/${id}`);
+    return this.http.get<Project>(`${this.apiUrl}/${id}`).pipe(
+      catchError(error => {
+        console.error(`Error fetching project ${id}:`, error);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
    * Create a new project
    */
   createProject(project: Omit<Project, 'id' | 'createdAt' | 'managerId'>): Observable<Project> {
-    return this.http.post<Project>(this.apiUrl, project);
+    console.log('Creating new project:', project);
+    return this.http.post<Project>(this.apiUrl, project).pipe(
+      catchError(error => {
+        console.error('Error creating project:', error);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
    * Update an existing project
    */
   updateProject(id: number, project: Partial<Omit<Project, 'id' | 'createdAt' | 'managerId'>>): Observable<void> {
-    return this.http.put<void>(`${this.apiUrl}/${id}`, project);
+    console.log(`Updating project ${id}:`, project);
+    return this.http.put<void>(`${this.apiUrl}/${id}`, project).pipe(
+      catchError(error => {
+        console.error(`Error updating project ${id}:`, error);
+        return throwError(() => error);
+      })
+    );
   }
 
   /**
    * Delete a project
    */
   deleteProject(id: number): Observable<void> {
-    return this.http.delete<void>(`${this.apiUrl}/${id}`);
+    console.log(`Deleting project ${id}`);
+    return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
+      catchError(error => {
+        console.error(`Error deleting project ${id}:`, error);
+        return throwError(() => error);
+      })
+    );
   }
 }

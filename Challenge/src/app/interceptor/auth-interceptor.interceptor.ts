@@ -20,18 +20,23 @@ export const AuthInterceptor: HttpInterceptorFn = (
 
     // If token exists, clone the request and add the authorization header
     if (token) {
+      console.log('Adding token to request', request.url);
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
         }
       });
+    } else {
+      console.log('No token available for request', request.url);
     }
   }
 
   // Handle the request and catch any authentication errors
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
+      console.error('HTTP Error:', error);
       if (error.status === 401 && isPlatformBrowser(platformId)) {
+        console.log('401 Unauthorized - logging out');
         // If unauthorized, log out the user and redirect to login page
         authService.logout();
         router.navigate(['/login']);
