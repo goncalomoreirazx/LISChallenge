@@ -20,14 +20,26 @@ export const AuthInterceptor: HttpInterceptorFn = (
 
     // If token exists, clone the request and add the authorization header
     if (token) {
-      console.log('Adding token to request', request.url);
+      console.log('Adding token to request:', request.url);
       request = request.clone({
         setHeaders: {
           Authorization: `Bearer ${token}`
         }
       });
     } else {
-      console.log('No token available for request', request.url);
+      console.log('No token available for request:', request.url);
+      
+      // Don't intercept login/register requests
+      if (request.url.includes('/auth/login') || request.url.includes('/auth/register')) {
+        return next(request);
+      }
+      
+      // If we're not authenticated and trying to access a protected resource, 
+      // redirect to login instead of making the request
+      if (isPlatformBrowser(platformId) && authService.isLoggedIn() === false) {
+        router.navigate(['/login']);
+        return throwError(() => new Error('Not authenticated'));
+      }
     }
   }
 

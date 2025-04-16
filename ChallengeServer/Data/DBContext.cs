@@ -48,6 +48,11 @@ namespace ChallengeServer.Data
                 .HasForeignKey(t => t.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
 
+            // Fix for decimal precision warning
+            modelBuilder.Entity<Project>()
+                .Property(p => p.Budget)
+                .HasColumnType("decimal(18,2)");
+
             modelBuilder.Entity<ProjectProgrammer>()
                 .HasOne(pp => pp.Project)
                 .WithMany()

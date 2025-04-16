@@ -62,16 +62,21 @@ export class AuthService {
   }
 
   public isLoggedIn(): boolean {
-    const hasToken = this.getToken() !== null;
-    console.log('isLoggedIn check:', hasToken);
-    return hasToken;
+    // First check if we have a current user
+    const currentUser = this.currentUserValue;
+    
+    // Then check if we have a token
+    const token = this.getToken();
+    
+    const isLoggedIn = currentUser !== null && token !== null;
+    console.log('isLoggedIn check:', isLoggedIn, 'User:', !!currentUser, 'Token:', !!token);
+    
+    return isLoggedIn;
   }
 
   public getToken(): string | null {
     if (isPlatformBrowser(this.platformId)) {
       const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-      // Log token availability (not the actual token for security)
-      console.log('Token available:', token !== null);
       return token;
     }
     return null;
@@ -104,8 +109,19 @@ export class AuthService {
           if (isPlatformBrowser(this.platformId)) {
             // Store token and user data
             const storage = rememberMe ? localStorage : sessionStorage;
+            
+            // Clear both storage types first to avoid conflicts
+            localStorage.removeItem('auth_token');
+            localStorage.removeItem('user_data');
+            sessionStorage.removeItem('auth_token');
+            sessionStorage.removeItem('user_data');
+            
+            // Then store in the appropriate storage
             storage.setItem('auth_token', response.token);
             storage.setItem('user_data', JSON.stringify(response.user));
+            
+            console.log('Stored token and user data in', rememberMe ? 'localStorage' : 'sessionStorage');
+            console.log('User data:', response.user);
           }
           this.currentUserSubject.next(response.user);
         }),

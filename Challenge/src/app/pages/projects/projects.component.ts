@@ -16,10 +16,11 @@ export class ProjectsComponent implements OnInit {
   // Track sidebar collapsed state
   sidebarCollapsed = false;
   
-  constructor(private authService: AuthService) {}
+  constructor(public authService: AuthService) {} // Changed to public for template access
   
   ngOnInit() {
     // Any initialization code can go here
+    console.log('Projects component initialized with user:', this.authService.currentUserValue);
   }
   
   // Receive sidebar state changes
