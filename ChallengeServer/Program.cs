@@ -5,11 +5,35 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 using ChallengeServer.Data;
 using ChallengeServer.Services;
+using ChallengeServer.Middleware;
+using Microsoft.AspNetCore.Mvc;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .ConfigureApiBehaviorOptions(options =>
+    {
+        options.InvalidModelStateResponseFactory = context =>
+        {
+            var errors = context.ModelState
+                .Where(e => e.Value?.Errors.Count > 0)
+                .Select(e => new
+                {
+                    Field = e.Key,
+                    Errors = e.Value?.Errors.Select(err => err.ErrorMessage).ToArray()
+                })
+                .ToArray();
+
+            var result = new
+            {
+                Message = "Validation Failed",
+                Errors = errors
+            };
+
+            return new BadRequestObjectResult(result);
+        };
+    });
 builder.Services.AddEndpointsApiExplorer();
 
 // Configure OpenAPI/Swagger
@@ -148,6 +172,9 @@ else
 
 // Apply CORS middleware before auth middleware
 app.UseCors("AllowAngular");
+
+// Global error handling middleware
+app.UseErrorHandling();
 
 app.UseAuthentication();
 app.UseAuthorization();

@@ -65,18 +65,29 @@ export class ProjectService {
   }
 
   /**
-   * Create a new project
-   */
-  createProject(project: Omit<Project, 'id' | 'createdAt' | 'managerId'>): Observable<Project> {
-    console.log('Creating new project:', project);
-    return this.http.post<Project>(this.apiUrl, project).pipe(
-      catchError(error => {
-        console.error('Error creating project:', error);
-        return throwError(() => error);
-      })
-    );
-  }
-
+ * Create a new project
+ */
+createProject(project: Omit<Project, 'id' | 'createdAt' | 'managerId'>): Observable<Project> {
+  console.log('Creating new project:', project);
+  
+  // Create a properly formatted project object
+  const projectToSubmit = {
+    name: project.name,
+    description: project.description,
+    budget: project.budget,
+    // These fields will be set by the server, but need to be included in the model
+    createdAt: new Date().toISOString(), // This will be overwritten by the server
+    managerId: 0, // This will be set from the JWT token on the server
+    id: 0, // This will be assigned by the database
+  };
+  
+  return this.http.post<Project>(this.apiUrl, projectToSubmit).pipe(
+    catchError(error => {
+      console.error('Error creating project:', error);
+      return throwError(() => error);
+    })
+  );
+}
   /**
    * Update an existing project
    */

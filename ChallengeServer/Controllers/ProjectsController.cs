@@ -120,35 +120,43 @@ namespace ChallengeServer.Controllers
             }
         }
 
-        // POST: api/projects
-        [HttpPost]
-        [Authorize(Policy = "ProjectManager")]
-        public async Task<ActionResult<Project>> CreateProject(Project project)
+       // POST: api/projects
+[HttpPost]
+[Authorize(Policy = "ProjectManager")]
+public async Task<ActionResult<Project>> CreateProject(CreateProjectDto projectDto)
+{
+    try
+    {
+        // Get current user ID from claims
+        var userId = User.FindFirstValue("Id");
+        if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
         {
-            try
-            {
-                // Get current user ID from claims
-                var userId = User.FindFirstValue("Id");
-                if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
-                {
-                    return Unauthorized(new { message = "User not authenticated properly" });
-                }
-
-                // Set the manager ID to current user
-                project.ManagerId = currentUserId;
-                project.CreatedAt = DateTime.UtcNow;
-
-                _context.Projects.Add(project);
-                await _context.SaveChangesAsync();
-
-                return CreatedAtAction(nameof(GetProject), new { id = project.Id }, project);
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error creating new project");
-                return StatusCode(500, new { message = "Internal server error" });
-            }
+            return Unauthorized(new { message = "User not authenticated properly" });
         }
+
+        // Create a new project entity from the DTO
+        var project = new Project
+        {
+            Name = projectDto.Name,
+            Description = projectDto.Description,
+            Budget = projectDto.Budget,
+            CreatedAt = DateTime.UtcNow,
+            ManagerId = currentUserId
+        };
+
+        _context.Projects.Add(project);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Project created successfully with ID {ProjectId} by user {UserId}", project.Id, currentUserId);
+
+        return CreatedAtAction(nameof(GetProject), new { id = project.Id }, project);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error creating new project");
+        return StatusCode(500, new { message = "Internal server error occurred. Please try again later." });
+    }
+}
 
         // PUT: api/projects/{id}
         [HttpPut("{id}")]

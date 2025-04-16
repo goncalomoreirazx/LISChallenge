@@ -85,19 +85,28 @@ export class ProjectListComponent implements OnInit {
       this.formError = 'Project name is required';
       return;
     }
-
+  
     this.isSubmitting = true;
     this.formError = null;
     
-    // Convert budget to number if it's a string
+    // Create a clean project object
     let projectToSubmit = {
-      ...this.newProject
+      name: this.newProject.name.trim(),
+      // Sanitize description - remove any HTML tags or replace < and > characters
+      description: this.newProject.description ? 
+                   this.newProject.description.replace(/</g, '&lt;').replace(/>/g, '&gt;') : '',
+      budget: null as number | null
     };
     
-    if (typeof projectToSubmit.budget === 'string') {
-      projectToSubmit.budget = projectToSubmit.budget ? parseFloat(projectToSubmit.budget as unknown as string) : null;
+    // Convert budget to number if it's a string
+    if (this.newProject.budget !== null) {
+      if (typeof this.newProject.budget === 'string') {
+        projectToSubmit.budget = parseFloat(this.newProject.budget as unknown as string) || null;
+      } else {
+        projectToSubmit.budget = this.newProject.budget;
+      }
     }
-
+  
     this.projectService.createProject(projectToSubmit).subscribe({
       next: () => {
         // Reset form and close it
@@ -110,7 +119,14 @@ export class ProjectListComponent implements OnInit {
       },
       error: (err) => {
         this.isSubmitting = false;
-        this.formError = err.error?.message || 'Failed to create project. Please try again.';
+        // More detailed error handling
+        if (err.error && err.error.message) {
+          this.formError = err.error.message;
+        } else if (err.status === 400) {
+          this.formError = 'Invalid project data. Please check your inputs.';
+        } else {
+          this.formError = 'Failed to create project. Please try again.';
+        }
         console.error('Error creating project', err);
       }
     });
