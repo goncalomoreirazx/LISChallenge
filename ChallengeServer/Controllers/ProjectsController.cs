@@ -252,6 +252,135 @@ namespace ChallengeServer.Controllers
             }
         }
 
+
+        [HttpPost("{id}/programmers")]
+[Authorize(Policy = "ProjectManager")]
+public async Task<IActionResult> AllocateProgrammers(int id, [FromBody] List<int> programmerIds)
+{
+    try
+    {
+        // Get current user ID from claims
+        var userId = User.FindFirstValue("Id");
+        if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
+        {
+            return Unauthorized(new { message = "User not authenticated properly" });
+        }
+
+        // Validate the project exists and belongs to this manager
+        var project = await _context.Projects.FindAsync(id);
+        if (project == null)
+        {
+            return NotFound(new { message = "Project not found" });
+        }
+
+        if (project.ManagerId != currentUserId)
+        {
+            return Forbid();
+        }
+
+        // Validate all programmers exist and are of type 'Programmer' (type 2)
+        var programmers = await _context.Users
+            .Where(u => programmerIds.Contains(u.Id) && u.UserType == 2)
+            .ToListAsync();
+
+        if (programmers.Count != programmerIds.Count)
+        {
+            return BadRequest(new { message = "One or more selected users are not valid programmers" });
+        }
+
+        // Remove existing allocations
+        var existingAllocations = await _context.ProjectProgrammers
+            .Where(pp => pp.ProjectId == id)
+            .ToListAsync();
+            
+        _context.ProjectProgrammers.RemoveRange(existingAllocations);
+
+        // Add new allocations
+        foreach (var programmerId in programmerIds)
+        {
+            _context.ProjectProgrammers.Add(new ProjectProgrammer
+            {
+                ProjectId = id,
+                ProgrammerId = programmerId,
+                AllocationDate = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+
+        return Ok(new { message = "Programmers allocated successfully" });
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error allocating programmers to project with ID {ProjectId}", id);
+        return StatusCode(500, new { message = "Internal server error" });
+    }
+}
+
+// Also add a GET endpoint to view allocated programmers
+[HttpGet("{id}/programmers")]
+[Authorize]
+public async Task<ActionResult<IEnumerable<User>>> GetProjectProgrammers(int id)
+{
+    try
+    {
+        // Get current user ID from claims
+        var userId = User.FindFirstValue("Id");
+        if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
+        {
+            return Unauthorized(new { message = "User not authenticated properly" });
+        }
+
+        // Check project exists
+        var project = await _context.Projects.FindAsync(id);
+        if (project == null)
+        {
+            return NotFound(new { message = "Project not found" });
+        }
+
+        // Verify access rights (Project Manager or Programmer assigned to this project)
+        var userType = User.FindFirstValue("UserType");
+        if (string.IsNullOrEmpty(userType) || !int.TryParse(userType, out int userTypeId))
+        {
+            return Unauthorized(new { message = "User type not determined" });
+        }
+
+        if (userTypeId == 1 && project.ManagerId != currentUserId)
+        {
+            return Forbid();
+        }
+        else if (userTypeId == 2 && !await _context.Tasks.AnyAsync(t => t.ProjectId == id && t.AssigneeId == currentUserId))
+        {
+            return Forbid();
+        }
+
+        // Get programmers allocated to this project
+        var programmers = await _context.Users
+            .Join(_context.ProjectProgrammers,
+                user => user.Id,
+                pp => pp.ProgrammerId,
+                (user, pp) => new { User = user, ProjectProgrammer = pp })
+            .Where(x => x.ProjectProgrammer.ProjectId == id)
+            .Select(x => new {
+                Id = x.User.Id,
+                FullName = x.User.FullName,
+                Email = x.User.Email,
+                UserType = x.User.UserType,
+                UserTypeDescription = x.User.UserTypeDescription,
+                AllocationDate = x.ProjectProgrammer.AllocationDate
+            })
+            .ToListAsync();
+
+        return Ok(programmers);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving programmers for project with ID {ProjectId}", id);
+        return StatusCode(500, new { message = "Internal server error" });
+    }
+}
+
+
         private bool ProjectExists(int id)
         {
             return _context.Projects.Any(e => e.Id == id);

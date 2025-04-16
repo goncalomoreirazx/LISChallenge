@@ -1,9 +1,12 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, PLATFORM_ID, Inject } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { ProjectService, Project } from '../../../services/project.service';
-import { AuthService } from '../../../services/auth-service.service';
+import { AuthService, User } from '../../../services/auth-service.service';
+import { UserService } from '../../../services/user.service';
+
+declare var bootstrap: any; // For Bootstrap modal
 
 @Component({
   selector: 'app-project-detail',
@@ -26,6 +29,16 @@ export class ProjectDetailComponent implements OnInit {
     budget: null as number | null
   };
   
+  // For programmers allocation
+  projectProgrammers: any[] = [];
+  availableProgrammers: User[] = [];
+  selectedProgrammerIds: number[] = [];
+  loadingProgrammers = false;
+  loadingAvailableProgrammers = false;
+  allocationError: string | null = null;
+  isAllocating = false;
+  private programmerModal: any;
+  
   isSubmitting = false;
   formError: string | null = null;
 
@@ -33,7 +46,9 @@ export class ProjectDetailComponent implements OnInit {
     private route: ActivatedRoute,
     private router: Router,
     private projectService: ProjectService,
-    private authService: AuthService
+    private authService: AuthService,
+    private userService: UserService,
+    @Inject(PLATFORM_ID) private platformId: Object
   ) {}
 
   ngOnInit(): void {
@@ -45,6 +60,16 @@ export class ProjectDetailComponent implements OnInit {
     } else {
       this.error = 'Invalid project ID';
       this.loading = false;
+    }
+    
+    // Initialize Bootstrap modal
+    if (isPlatformBrowser(this.platformId)) {
+      setTimeout(() => {
+        const modalEl = document.getElementById('programmerModal');
+        if (modalEl) {
+          this.programmerModal = new bootstrap.Modal(modalEl);
+        }
+      }, 0);
     }
   }
 
@@ -59,11 +84,30 @@ export class ProjectDetailComponent implements OnInit {
         
         // Initialize edit form with current values
         this.resetEditForm();
+        
+        // Load project programmers
+        this.loadProjectProgrammers();
       },
       error: (err) => {
         this.error = 'Failed to load project details. Please try again.';
         this.loading = false;
         console.error('Error loading project', err);
+      }
+    });
+  }
+  
+  loadProjectProgrammers(): void {
+    if (!this.projectId) return;
+    
+    this.loadingProgrammers = true;
+    this.projectService.getProjectProgrammers(this.projectId).subscribe({
+      next: (programmers) => {
+        this.projectProgrammers = programmers;
+        this.loadingProgrammers = false;
+      },
+      error: (err) => {
+        console.error('Error loading project programmers', err);
+        this.loadingProgrammers = false;
       }
     });
   }
@@ -143,6 +187,74 @@ export class ProjectDetailComponent implements OnInit {
         }
       });
     }
+  }
+  
+  // Programmer allocation methods
+  showProgrammerModal(): void {
+    // Reset state
+    this.selectedProgrammerIds = this.projectProgrammers.map(p => p.id);
+    this.allocationError = null;
+    this.isAllocating = false;
+    
+    // Load available programmers
+    this.loadAvailableProgrammers();
+    
+    // Show the modal
+    if (this.programmerModal) {
+      this.programmerModal.show();
+    }
+  }
+
+  loadAvailableProgrammers(): void {
+    this.loadingAvailableProgrammers = true;
+    this.userService.getProgrammers().subscribe({
+      next: (programmers) => {
+        this.availableProgrammers = programmers;
+        this.loadingAvailableProgrammers = false;
+      },
+      error: (err) => {
+        console.error('Error loading available programmers', err);
+        this.loadingAvailableProgrammers = false;
+      }
+    });
+  }
+
+  isProgrammerSelected(programmerId: number): boolean {
+    return this.selectedProgrammerIds.includes(programmerId);
+  }
+
+  toggleProgrammerSelection(programmerId: number): void {
+    if (this.isProgrammerSelected(programmerId)) {
+      this.selectedProgrammerIds = this.selectedProgrammerIds.filter(id => id !== programmerId);
+    } else {
+      this.selectedProgrammerIds.push(programmerId);
+    }
+  }
+
+  allocateProgrammers(): void {
+    if (!this.projectId) return;
+    
+    this.isAllocating = true;
+    this.allocationError = null;
+    
+    this.projectService.allocateProgrammers(this.projectId, this.selectedProgrammerIds).subscribe({
+      next: () => {
+        this.isAllocating = false;
+        
+        // Close the modal
+        if (this.programmerModal) {
+          this.programmerModal.hide();
+        }
+        
+        // Reload programmers
+        this.loadProjectProgrammers();
+      },
+      error: (err) => {
+        this.isAllocating = false;
+        this.allocationError = err.error?.message || 'Failed to allocate programmers. Please try again.';
+        console.error('Error allocating programmers', err);
+      }
+    });
   }
 
   // Format date for display

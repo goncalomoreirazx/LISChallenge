@@ -1,137 +1,232 @@
 <div class="container mt-4">
-    <div class="card shadow-sm border-0">
-      <!-- Card Header with Back Button -->
-      <div class="card-header bg-transparent">
-        <div class="d-flex justify-content-between align-items-center">
-          <button class="btn btn-sm btn-outline-secondary" (click)="goBack()">
-            <i class="bi bi-arrow-left me-1"></i> Back to Projects
+  <div class="card shadow-sm border-0">
+    <!-- Card Header with Back Button -->
+    <div class="card-header bg-transparent">
+      <div class="d-flex justify-content-between align-items-center">
+        <button class="btn btn-sm btn-outline-secondary" (click)="goBack()">
+          <i class="bi bi-arrow-left me-1"></i> Back to Projects
+        </button>
+        <div class="btn-group" *ngIf="isProjectManager() && !isEditing && project">
+          <button class="btn btn-sm btn-primary" (click)="toggleEditMode()">
+            <i class="bi bi-pencil me-1"></i> Edit
           </button>
-          <div class="btn-group" *ngIf="isProjectManager() && !isEditing && project">
-            <button class="btn btn-sm btn-primary" (click)="toggleEditMode()">
-              <i class="bi bi-pencil me-1"></i> Edit
-            </button>
-            <button class="btn btn-sm btn-danger" (click)="deleteProject()">
-              <i class="bi bi-trash me-1"></i> Delete
-            </button>
+          <button class="btn btn-sm btn-danger" (click)="deleteProject()">
+            <i class="bi bi-trash me-1"></i> Delete
+          </button>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Loading indicator -->
+    <div class="card-body text-center" *ngIf="loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading project details...</span>
+      </div>
+      <p class="mt-2">Loading project details...</p>
+    </div>
+    
+    <!-- Error message -->
+    <div class="card-body" *ngIf="error && !loading">
+      <div class="alert alert-danger">
+        {{ error }}
+        <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadProject()">Try Again</button>
+      </div>
+    </div>
+    
+    <!-- Project details (view mode) -->
+    <div class="card-body" *ngIf="!loading && !error && project && !isEditing">
+      <h2 class="card-title mb-3">{{ project.name }}</h2>
+      
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="d-flex align-items-center mb-2">
+            <span class="badge bg-primary me-2">Created</span>
+            <span>{{ formatDate(project.createdAt) }}</span>
+          </div>
+          <div class="d-flex align-items-center mb-2" *ngIf="project.budget">
+            <span class="badge bg-success me-2">Budget</span>
+            <span>${{ project.budget.toLocaleString() }}</span>
           </div>
         </div>
       </div>
       
-      <!-- Loading indicator -->
-      <div class="card-body text-center" *ngIf="loading">
-        <div class="spinner-border text-primary" role="status">
-          <span class="visually-hidden">Loading project details...</span>
+      <div class="card mb-4">
+        <div class="card-header">
+          <h5 class="mb-0">Description</h5>
         </div>
-        <p class="mt-2">Loading project details...</p>
-      </div>
-      
-      <!-- Error message -->
-      <div class="card-body" *ngIf="error && !loading">
-        <div class="alert alert-danger">
-          {{ error }}
-          <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadProject()">Try Again</button>
+        <div class="card-body">
+          <p *ngIf="project.description">{{ project.description }}</p>
+          <p *ngIf="!project.description" class="text-muted">No description provided</p>
         </div>
       </div>
       
-      <!-- Project details (view mode) -->
-      <div class="card-body" *ngIf="!loading && !error && project && !isEditing">
-        <h2 class="card-title mb-3">{{ project.name }}</h2>
-        
-        <div class="row mb-4">
-          <div class="col-md-6">
-            <div class="d-flex align-items-center mb-2">
-              <span class="badge bg-primary me-2">Created</span>
-              <span>{{ formatDate(project.createdAt) }}</span>
+      <!-- Programmers section -->
+      <div class="card mb-4" *ngIf="isProjectManager() && !loading && !error && project">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Programmers</h5>
+          <button class="btn btn-sm btn-primary" (click)="showProgrammerModal()">
+            <i class="bi bi-person-plus me-1"></i> Allocate Programmers
+          </button>
+        </div>
+        <div class="card-body">
+          <div *ngIf="loadingProgrammers" class="text-center">
+            <div class="spinner-border spinner-border-sm text-primary" role="status">
+              <span class="visually-hidden">Loading programmers...</span>
             </div>
-            <div class="d-flex align-items-center mb-2" *ngIf="project.budget">
-              <span class="badge bg-success me-2">Budget</span>
-              <span>${{ project.budget.toLocaleString() }}</span>
-            </div>
+            <span class="ms-2">Loading allocated programmers...</span>
           </div>
-        </div>
-        
-        <div class="card mb-4">
-          <div class="card-header">
-            <h5 class="mb-0">Description</h5>
-          </div>
-          <div class="card-body">
-            <p *ngIf="project.description">{{ project.description }}</p>
-            <p *ngIf="!project.description" class="text-muted">No description provided</p>
-          </div>
-        </div>
-        
-        <!-- Tasks section would go here in the future -->
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Tasks</h5>
-            <button class="btn btn-sm btn-primary" disabled>
-              <i class="bi bi-plus-circle me-1"></i> Add Task
+          
+          <div *ngIf="!loadingProgrammers && projectProgrammers.length === 0" class="text-center py-3">
+            <i class="bi bi-people text-muted fs-1"></i>
+            <p class="mt-2">No programmers allocated to this project yet.</p>
+            <button class="btn btn-primary btn-sm" (click)="showProgrammerModal()">
+              Allocate programmers
             </button>
           </div>
-          <div class="card-body text-center">
-            <p class="text-muted">Task management will be implemented in the next phase.</p>
-          </div>
+          
+          <ul class="list-group list-group-flush" *ngIf="!loadingProgrammers && projectProgrammers.length > 0">
+            <li class="list-group-item" *ngFor="let programmer of projectProgrammers">
+              <div class="d-flex justify-content-between align-items-center">
+                <div>
+                  <h6 class="mb-0">{{ programmer.fullName }}</h6>
+                  <small class="text-muted">{{ programmer.email }}</small>
+                </div>
+                <small class="text-muted">Allocated on {{ formatDate(programmer.allocationDate) }}</small>
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
       
-      <!-- Project edit form -->
-      <div class="card-body" *ngIf="!loading && !error && project && isEditing">
-        <h3 class="mb-4">Edit Project</h3>
+      <!-- Tasks section would go here in the future -->
+      <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Tasks</h5>
+          <button class="btn btn-sm btn-primary" disabled>
+            <i class="bi bi-plus-circle me-1"></i> Add Task
+          </button>
+        </div>
+        <div class="card-body text-center">
+          <p class="text-muted">Task management will be implemented in the next phase.</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Project edit form -->
+    <div class="card-body" *ngIf="!loading && !error && project && isEditing">
+      <h3 class="mb-4">Edit Project</h3>
+      
+      <form (ngSubmit)="submitEditedProject()">
+        <div class="mb-3">
+          <label for="projectName" class="form-label">Project Name</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="projectName" 
+            name="projectName"
+            [(ngModel)]="editedProject.name"
+            required
+            placeholder="Enter project name">
+        </div>
         
-        <form (ngSubmit)="submitEditedProject()">
-          <div class="mb-3">
-            <label for="projectName" class="form-label">Project Name</label>
+        <div class="mb-3">
+          <label for="projectDescription" class="form-label">Description</label>
+          <textarea 
+            class="form-control" 
+            id="projectDescription" 
+            name="projectDescription"
+            [(ngModel)]="editedProject.description"
+            rows="5"
+            placeholder="Enter project description"></textarea>
+        </div>
+        
+        <div class="mb-3">
+          <label for="projectBudget" class="form-label">Budget</label>
+          <div class="input-group">
+            <span class="input-group-text">$</span>
             <input 
-              type="text" 
+              type="number" 
               class="form-control" 
-              id="projectName" 
-              name="projectName"
-              [(ngModel)]="editedProject.name"
-              required
-              placeholder="Enter project name">
+              id="projectBudget" 
+              name="projectBudget"
+              [(ngModel)]="editedProject.budget"
+              placeholder="Enter project budget">
           </div>
-          
-          <div class="mb-3">
-            <label for="projectDescription" class="form-label">Description</label>
-            <textarea 
-              class="form-control" 
-              id="projectDescription" 
-              name="projectDescription"
-              [(ngModel)]="editedProject.description"
-              rows="5"
-              placeholder="Enter project description"></textarea>
+        </div>
+        
+        <!-- Error message display -->
+        <div *ngIf="formError" class="alert alert-danger mb-3">
+          {{ formError }}
+        </div>
+        
+        <div class="d-flex justify-content-end gap-2">
+          <button type="button" class="btn btn-secondary" (click)="toggleEditMode()">Cancel</button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            [disabled]="isSubmitting">
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal for programmer allocation -->
+<div class="modal fade" id="programmerModal" tabindex="-1" aria-labelledby="programmerModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="programmerModalLabel">Allocate Programmers</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div *ngIf="loadingAvailableProgrammers" class="text-center py-3">
+          <div class="spinner-border text-primary" role="status">
+            <span class="visually-hidden">Loading programmers...</span>
           </div>
-          
+          <p class="mt-2">Loading programmers...</p>
+        </div>
+
+        <div *ngIf="!loadingAvailableProgrammers && availableProgrammers.length === 0" class="text-center py-3">
+          <i class="bi bi-exclamation-circle text-warning fs-1"></i>
+          <p class="mt-2">No programmers available in the system.</p>
+        </div>
+
+        <div *ngIf="!loadingAvailableProgrammers && availableProgrammers.length > 0">
           <div class="mb-3">
-            <label for="projectBudget" class="form-label">Budget</label>
-            <div class="input-group">
-              <span class="input-group-text">$</span>
+            <label class="form-label">Select programmers to allocate to this project:</label>
+            <div class="form-check" *ngFor="let programmer of availableProgrammers">
               <input 
-                type="number" 
-                class="form-control" 
-                id="projectBudget" 
-                name="projectBudget"
-                [(ngModel)]="editedProject.budget"
-                placeholder="Enter project budget">
+                class="form-check-input" 
+                type="checkbox" 
+                [id]="'programmer-' + programmer.id"
+                [checked]="isProgrammerSelected(programmer.id)"
+                (change)="toggleProgrammerSelection(programmer.id)">
+              <label class="form-check-label" [for]="'programmer-' + programmer.id">
+                {{ programmer.fullName }} ({{ programmer.email }})
+              </label>
             </div>
           </div>
-          
-          <!-- Error message display -->
-          <div *ngIf="formError" class="alert alert-danger mb-3">
-            {{ formError }}
-          </div>
-          
-          <div class="d-flex justify-content-end gap-2">
-            <button type="button" class="btn btn-secondary" (click)="toggleEditMode()">Cancel</button>
-            <button 
-              type="submit" 
-              class="btn btn-primary" 
-              [disabled]="isSubmitting">
-              <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-              Save Changes
-            </button>
-          </div>
-        </form>
+        </div>
+        
+        <div *ngIf="allocationError" class="alert alert-danger">
+          {{ allocationError }}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          [disabled]="isAllocating || selectedProgrammerIds.length === 0"
+          (click)="allocateProgrammers()">
+          <span *ngIf="isAllocating" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+          Save Allocation
+        </button>
       </div>
     </div>
   </div>
+</div>

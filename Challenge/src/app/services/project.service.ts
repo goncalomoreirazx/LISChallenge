@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { Observable, catchError, throwError } from 'rxjs';
 import { environment } from '../environment/environment';
-import { AuthService } from './auth-service.service';
+import { AuthService, User } from './auth-service.service';
 
 export interface Project {
   id: number;
@@ -102,4 +102,42 @@ export class ProjectService {
       })
     );
   }
+
+  /**
+ * Get available programmers for allocation
+ */
+getAvailableProgrammers(): Observable<User[]> {
+  return this.http.get<User[]>(`${environment.apiUrl}/users/programmers`).pipe(
+    catchError(error => {
+      console.error('Error fetching programmers:', error);
+      return throwError(() => error);
+    })
+  );
+}
+
+/**
+ * Get programmers allocated to a project
+ */
+getProjectProgrammers(id: number): Observable<any[]> {
+  return this.http.get<any[]>(`${this.apiUrl}/${id}/programmers`).pipe(
+    catchError(error => {
+      console.error(`Error fetching programmers for project ${id}:`, error);
+      return throwError(() => error);
+    })
+  );
+}
+
+/**
+ * Allocate programmers to a project
+ */
+allocateProgrammers(id: number, programmerIds: number[]): Observable<any> {
+  return this.http.post<any>(`${this.apiUrl}/${id}/programmers`, programmerIds).pipe(
+    catchError(error => {
+      console.error(`Error allocating programmers to project ${id}:`, error);
+      return throwError(() => error);
+    })
+  );
+}
+
+
 }
