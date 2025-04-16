@@ -81,11 +81,11 @@ export class DashboardComponent implements OnInit {
   }
   
   // Receive sidebar state changes - handle the event with correct typing
-  onSidebarStateChanged(event: any) {
-    // The event is the isCollapsed boolean value from the sidebar
-    this.sidebarCollapsed = Boolean(event);
+  onSidebarStateChanged(event: boolean) {
+    setTimeout(() => {
+      this.sidebarCollapsed = event;
+    }, 0);
   }
-  
   // Format date for display
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('en-US', {

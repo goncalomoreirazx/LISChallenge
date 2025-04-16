@@ -1,5 +1,5 @@
-import { Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { Component, OnInit, Inject, PLATFORM_ID } from '@angular/core';
+import { CommonModule, isPlatformBrowser } from '@angular/common';
 import { RouterLink, Router, ActivatedRoute } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HttpClientModule } from '@angular/common/http';
@@ -22,14 +22,27 @@ export class LoginComponent implements OnInit {
   errorMessage = '';
   isSubmitting = false;
   registrationSuccess = false;
+  private isBrowser: boolean;
 
   constructor(
     private authService: AuthService, 
     private router: Router,
-    private route: ActivatedRoute
-  ) {}
+    private route: ActivatedRoute,
+    @Inject(PLATFORM_ID) private platformId: Object
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+    console.log(`Login component constructor - isBrowser: ${this.isBrowser}`);
+  }
 
   ngOnInit() {
+    console.log(`Login component ngOnInit - isBrowser: ${this.isBrowser}`);
+    
+    // Only perform browser-specific operations when in browser context
+    if (!this.isBrowser) {
+      console.log('Skipping browser-specific operations in server context');
+      return;
+    }
+    
     // Check if user is already logged in
     if (this.authService.isLoggedIn()) {
       console.log('User already logged in, redirecting to dashboard');
@@ -48,6 +61,13 @@ export class LoginComponent implements OnInit {
   }
 
   onSubmit() {
+    console.log(`Login submission - isBrowser: ${this.isBrowser}`);
+    
+    if (!this.isBrowser) {
+      this.errorMessage = 'Cannot perform login in server environment';
+      return;
+    }
+    
     // Reset error message
     this.errorMessage = '';
     
@@ -67,21 +87,25 @@ export class LoginComponent implements OnInit {
       this.loginData.rememberMe
     ).subscribe({
       next: (response) => {
+        console.log('Login service response received');
         this.isSubmitting = false;
         console.log('Login successful, token received:', !!response.token);
         console.log('User data:', response.user);
         
-        // Check if token was stored successfully
-        const tokenStored = !!this.authService.getToken();
-        console.log('Token stored successfully:', tokenStored);
-        
-        if (tokenStored) {
-          // Navigate to dashboard
-          this.router.navigate(['/dashboard']);
-        } else {
-          // Handle token storage failure
-          this.errorMessage = 'Failed to store authentication token. Please try again or contact support.';
-        }
+        // Double-check if token was stored
+        setTimeout(() => {
+          // Check if token was stored successfully
+          const tokenStored = !!this.authService.getToken();
+          console.log('Token stored successfully:', tokenStored);
+          
+          if (tokenStored) {
+            // Navigate to dashboard
+            this.router.navigate(['/dashboard']);
+          } else {
+            // Handle token storage failure
+            this.errorMessage = 'Failed to store authentication token. Please try again or contact support.';
+          }
+        }, 100); // Small timeout to ensure storage is complete
       },
       error: (error) => {
         this.isSubmitting = false;

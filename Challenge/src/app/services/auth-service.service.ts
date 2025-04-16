@@ -1,7 +1,7 @@
-import { Injectable, Inject, PLATFORM_ID } from '@angular/core';
+import { Injectable, Inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { BehaviorSubject, Observable, throwError } from 'rxjs';
-import { tap, catchError } from 'rxjs/operators';
+import { BehaviorSubject, Observable, throwError, of } from 'rxjs';
+import { tap, catchError, switchMap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../environment/environment';
 import { isPlatformBrowser } from '@angular/common';
@@ -24,83 +24,79 @@ export interface LoginResponse {
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = `${environment.apiUrl}/auth`; // Using environment configuration
+  private apiUrl = `${environment.apiUrl}/auth`; 
   private currentUserSubject = new BehaviorSubject<User | null>(null);
   public currentUser$ = this.currentUserSubject.asObservable();
+  private isBrowser: boolean;
 
   constructor(
     private http: HttpClient, 
     private router: Router,
+    private zone: NgZone,
     @Inject(PLATFORM_ID) private platformId: Object
-  ) {}
+  ) {
+    this.isBrowser = isPlatformBrowser(this.platformId);
+    console.log(`Auth service constructor - isBrowser: ${this.isBrowser}`);
+    
+    // Only attempt to load from storage in browser context
+    if (this.isBrowser) {
+      // Try to get user data
+      try {
+        const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
+        if (userData) {
+          const user = JSON.parse(userData);
+          this.currentUserSubject.next(user);
+          console.log('User loaded in constructor:', user);
+        }
+      } catch (error) {
+        console.error('Error loading stored user data in constructor', error);
+        this.logout();
+      }
+    }
+  }
 
   /**
    * Restore authentication state from storage
-   * Called during app initialization to restore user session
    */
   restoreAuthState(): void {
-    console.log('Restoring auth state...');
-    if (isPlatformBrowser(this.platformId)) {
-      this.loadStoredUser();
-      const isLoggedIn = this.isLoggedIn();
-      console.log('Auth state restored. User logged in:', isLoggedIn);
-    } else {
+    console.log(`Restoring auth state - isBrowser: ${this.isBrowser}`);
+    
+    if (!this.isBrowser) {
       console.log('Not in browser context, skipping auth state restoration');
+      return;
     }
-  }
-
-  /**
-   * Debug authentication state
-   * Logs current authentication details for debugging purposes
-   */
-  debugAuthState(): void {
-    if (isPlatformBrowser(this.platformId)) {
-      const token = this.getToken();
-      const user = this.currentUserValue;
-      
-      console.log('===== Auth State Debug =====');
-      console.log('Platform:', isPlatformBrowser(this.platformId) ? 'Browser' : 'Server');
-      console.log('User:', user ? `${user.fullName} (${user.email})` : 'None');
-      console.log('User Type:', user ? (user.userType === 1 ? 'Project Manager' : 'Programmer') : 'N/A');
-      console.log('Token exists:', !!token);
-      if (token) {
-        // Get expiration time from token without exposing the token in logs
-        try {
-          const tokenParts = token.split('.');
-          const tokenBody = JSON.parse(atob(tokenParts[1]));
-          const expTime = new Date(tokenBody.exp * 1000);
-          console.log('Token expires:', expTime.toLocaleString());
-          console.log('Token expired:', expTime < new Date());
-        } catch (e) {
-          console.log('Could not decode token expiration');
-        }
-      }
-      console.log('Local Storage Token:', !!localStorage.getItem('auth_token'));
-      console.log('Session Storage Token:', !!sessionStorage.getItem('auth_token'));
-      console.log('===========================');
-    } else {
-      console.log('Auth debug not available in server context');
-    }
-  }
-
-  private loadStoredUser(): void {
-    // Only attempt to load from storage in browser context
-    if (isPlatformBrowser(this.platformId)) {
-      // Try to get user from localStorage, then sessionStorage
+    
+    try {
+      // Load user data
       const userData = localStorage.getItem('user_data') || sessionStorage.getItem('user_data');
-      if (userData) {
-        try {
-          const user = JSON.parse(userData);
-          this.currentUserSubject.next(user);
-          console.log('User loaded from storage:', user);
-        } catch (error) {
-          console.error('Error parsing stored user data', error);
-          this.logout();
-        }
+      const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+      
+      if (userData && token) {
+        const user = JSON.parse(userData);
+        this.currentUserSubject.next(user);
+        console.log('User restored from storage:', user);
+        console.log('Token exists:', !!token);
       } else {
-        console.log('No user data found in storage');
+        console.log('No complete auth data found in storage');
+        if (userData || token) {
+          // Clear partial data
+          this.clearStorageData();
+        }
       }
+    } catch (error) {
+      console.error('Error during auth state restoration', error);
+      this.clearStorageData();
     }
+  }
+
+  private clearStorageData(): void {
+    if (!this.isBrowser) return;
+    
+    localStorage.removeItem('auth_token');
+    localStorage.removeItem('user_data');
+    sessionStorage.removeItem('auth_token');
+    sessionStorage.removeItem('user_data');
+    this.currentUserSubject.next(null);
   }
 
   public get currentUserValue(): User | null {
@@ -108,23 +104,21 @@ export class AuthService {
   }
 
   public isLoggedIn(): boolean {
-    // First check if we have a current user
+    if (!this.isBrowser) return false;
+    
     const currentUser = this.currentUserValue;
-    
-    // Then check if we have a token
     const token = this.getToken();
-    
     const isLoggedIn = currentUser !== null && token !== null;
-    console.log('isLoggedIn check:', isLoggedIn, 'User:', !!currentUser, 'Token:', !!token);
     
+    console.log('isLoggedIn check:', isLoggedIn, 'User:', !!currentUser, 'Token:', !!token);
     return isLoggedIn;
   }
 
   public getToken(): string | null {
-    if (isPlatformBrowser(this.platformId)) {
-      return localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
-    }
-    return null;
+    if (!this.isBrowser) return null;
+    
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    return token;
   }
 
   register(userData: {
@@ -143,44 +137,55 @@ export class AuthService {
   }
 
   login(email: string, password: string, rememberMe: boolean): Observable<LoginResponse> {
-    console.log('Login attempt:', email);
+    console.log('Login attempt:', email, 'isBrowser:', this.isBrowser);
+    
+    if (!this.isBrowser) {
+      console.error('Login attempted in non-browser environment');
+      return throwError(() => new Error('Cannot login in server environment'));
+    }
     
     return this.http.post<LoginResponse>(`${this.apiUrl}/login`, { email, password, rememberMe })
       .pipe(
         tap(response => {
-          console.log('Login successful, storing user data and token');
+          console.log('Login successful, received response with token length:', response.token?.length);
+          console.log('User data:', response.user);
           
-          // Only store in browser storage when in browser context
-          if (isPlatformBrowser(this.platformId)) {
-            // Store token and user data based on rememberMe flag
-            if (rememberMe) {
-              // Store in localStorage for persistent login
-              localStorage.setItem('auth_token', response.token);
-              localStorage.setItem('user_data', JSON.stringify(response.user));
-              
-              // Clear sessionStorage to avoid conflicts
-              sessionStorage.removeItem('auth_token');
-              sessionStorage.removeItem('user_data');
-              
-              console.log('Stored token and user data in localStorage');
-            } else {
-              // Store in sessionStorage for session-only login
-              sessionStorage.setItem('auth_token', response.token);
-              sessionStorage.setItem('user_data', JSON.stringify(response.user));
-              
-              // Clear localStorage to avoid conflicts
-              localStorage.removeItem('auth_token');
-              localStorage.removeItem('user_data');
-              
-              console.log('Stored token and user data in sessionStorage');
-            }
-            
-            console.log('User data:', response.user);
-            console.log('Token stored successfully:', !!this.getToken());
+          if (!this.isBrowser) {
+            console.error('Cannot store auth data in non-browser environment');
+            return;
           }
           
-          // Update current user subject regardless of storage
-          this.currentUserSubject.next(response.user);
+          // Clear any previous data
+          this.clearStorageData();
+            
+          try {
+            // Store token and user data based on rememberMe flag
+            if (rememberMe) {
+              localStorage.setItem('auth_token', response.token);
+              localStorage.setItem('user_data', JSON.stringify(response.user));
+              console.log('Stored in localStorage');
+            } else {
+              sessionStorage.setItem('auth_token', response.token);
+              sessionStorage.setItem('user_data', JSON.stringify(response.user));
+              console.log('Stored in sessionStorage');
+            }
+            
+            // Verify storage
+            const storedToken = this.getToken();
+            console.log('Token stored successfully:', !!storedToken);
+            
+            if (!storedToken) {
+              console.error('Failed to store token in browser storage');
+              throw new Error('Failed to store authentication data');
+            }
+            
+            // Update current user subject
+            this.currentUserSubject.next(response.user);
+          } catch (error) {
+            console.error('Error storing auth data', error);
+            this.clearStorageData();
+            throw error;
+          }
         }),
         catchError(error => {
           console.error('Login error', error);
@@ -189,19 +194,22 @@ export class AuthService {
       );
   }
 
-  logout(): void {
-    console.log('Logging out user');
+  logout(): Observable<void> {
+    console.log('Logging out user, isBrowser:', this.isBrowser);
     
-    // Only clear browser storage when in browser context
-    if (isPlatformBrowser(this.platformId)) {
-      // Remove user from local storage and set current user to null
-      localStorage.removeItem('auth_token');
-      localStorage.removeItem('user_data');
-      sessionStorage.removeItem('auth_token');
-      sessionStorage.removeItem('user_data');
-    }
-    this.currentUserSubject.next(null);
-    this.router.navigate(['/login']);
+    // Clear storage data regardless of result
+    this.clearStorageData();
+    
+    // Use NgZone to ensure navigation happens in Angular zone
+    return of(undefined).pipe(
+      tap(() => {
+        if (this.isBrowser) {
+          this.zone.run(() => {
+            this.router.navigate(['/login']);
+          });
+        }
+      })
+    );
   }
 
   // Check if user is a project manager

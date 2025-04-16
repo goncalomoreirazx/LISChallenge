@@ -12,11 +12,15 @@ export const AuthInterceptor: HttpInterceptorFn = (
   const authService = inject(AuthService);
   const router = inject(Router);
   const platformId = inject(PLATFORM_ID);
+  const isBrowser = isPlatformBrowser(platformId);
+  
+  console.log(`Auth interceptor - isBrowser: ${isBrowser}, URL: ${request.url}`);
   
   // Only add auth token in browser context
-  if (isPlatformBrowser(platformId)) {
+  if (isBrowser) {
     // Don't intercept login/register requests
     if (request.url.includes('/auth/login') || request.url.includes('/auth/register')) {
+      console.log('Skipping auth header for auth endpoints');
       return next(request);
     }
     
@@ -36,25 +40,29 @@ export const AuthInterceptor: HttpInterceptorFn = (
       
       // If we're not authenticated and trying to access a protected resource, 
       // redirect to login instead of making the request
-      if (isPlatformBrowser(platformId) && !authService.isLoggedIn() && !request.url.includes('/api/home')) {
+      if (!authService.isLoggedIn() && !request.url.includes('/api/home')) {
         // Only redirect for API requests that might need authentication
         if (request.url.includes('/api/')) {
+          console.log('Unauthenticated API request, redirecting to login');
           router.navigate(['/login']);
           return throwError(() => new Error('Not authenticated'));
         }
       }
     }
+  } else {
+    console.log('Running in server context, skipping auth token');
   }
 
   // Handle the request and catch any authentication errors
   return next(request).pipe(
     catchError((error: HttpErrorResponse) => {
       console.error('HTTP Error:', error);
-      if (error.status === 401 && isPlatformBrowser(platformId)) {
+      if (error.status === 401 && isBrowser) {
         console.log('401 Unauthorized - logging out');
         // If unauthorized, log out the user and redirect to login page
-        authService.logout();
-        router.navigate(['/login']);
+        authService.logout().subscribe(() => {
+          router.navigate(['/login']);
+        });
       }
       return throwError(() => error);
     })
