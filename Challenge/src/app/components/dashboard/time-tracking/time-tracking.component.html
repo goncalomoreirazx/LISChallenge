@@ -1,0 +1,91 @@
+<!-- src/app/components/dashboard/time-tracking/time-tracking.component.html -->
+<div class="card shadow-sm border-0">
+    <div class="card-header bg-primary text-white">
+      <h5 class="card-title mb-0">Time Tracking</h5>
+    </div>
+    
+    <div class="card-body">
+      <div *ngIf="!task" class="text-center py-4">
+        <i class="bi bi-clock text-muted fs-1"></i>
+        <p class="mt-2">No task selected for time tracking</p>
+      </div>
+      
+      <div *ngIf="task">
+        <h6 class="card-subtitle mb-3 text-muted">Task: {{ task.name }}</h6>
+        
+        <form (ngSubmit)="submitTimeEntry()" #timeForm="ngForm">
+          <div class="mb-3">
+            <label for="date" class="form-label">Date</label>
+            <input 
+              type="date" 
+              class="form-control" 
+              id="date" 
+              name="date"
+              [(ngModel)]="newEntry.date"
+              required>
+          </div>
+          
+          <div class="mb-3">
+            <label for="hours" class="form-label">Hours</label>
+            <input 
+              type="number" 
+              class="form-control" 
+              id="hours" 
+              name="hours"
+              [(ngModel)]="newEntry.hours"
+              required
+              min="0.1" 
+              step="0.1"
+              max="24">
+            <div class="form-text">Enter time in hours (e.g., 1.5 for 1 hour and 30 minutes)</div>
+          </div>
+          
+          <div class="mb-3">
+            <label for="notes" class="form-label">Notes</label>
+            <textarea 
+              class="form-control" 
+              id="notes" 
+              name="notes"
+              [(ngModel)]="newEntry.notes"
+              rows="2"
+              placeholder="What did you work on?"></textarea>
+          </div>
+          
+          <div *ngIf="formError" class="alert alert-danger mb-3">
+            {{ formError }}
+          </div>
+          
+          <button 
+            type="submit" 
+            class="btn btn-primary w-100" 
+            [disabled]="timeForm.invalid || isSubmitting">
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Log Time
+          </button>
+        </form>
+        
+        <!-- Recent time entries -->
+        <div class="mt-4">
+          <h6 class="d-flex justify-content-between align-items-center">
+            <span>Recent Time Entries</span>
+            <span class="badge bg-primary">Total: {{ totalHours.toFixed(1) }} hrs</span>
+          </h6>
+          
+          <div *ngIf="recentEntries.length === 0" class="text-center py-3">
+            <p class="text-muted mb-0">No time entries recorded yet</p>
+          </div>
+          
+          <div class="list-group mt-2" *ngIf="recentEntries.length > 0">
+            <div class="list-group-item list-group-item-action" *ngFor="let entry of recentEntries">
+              <div class="d-flex w-100 justify-content-between">
+                <h6 class="mb-1">{{ formatDate(entry.date) }}</h6>
+                <small class="text-primary fw-bold">{{ entry.hours.toFixed(1) }} hrs</small>
+              </div>
+              <p class="mb-1" *ngIf="entry.notes">{{ entry.notes }}</p>
+              <small class="text-muted" *ngIf="!entry.notes">No notes provided</small>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

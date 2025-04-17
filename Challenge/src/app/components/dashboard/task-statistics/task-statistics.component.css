@@ -1,0 +1,87 @@
+.completion-circle {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    border-radius: 50%;
+    background: conic-gradient(
+      #0d6efd 0%, 
+      #0d6efd calc(var(--completion-rate) * 1%), 
+      #e9ecef calc(var(--completion-rate) * 1%) 100%
+    );
+    margin: 0 auto 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  
+  .completion-circle::before {
+    content: '';
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+    background-color: white;
+  }
+  
+  .circle-info {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+  
+  .stats-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+  }
+  
+  .stats-icon.bg-primary {
+    background-color: rgba(13, 110, 253, 0.2);
+    color: #0d6efd;
+  }
+  
+  .stats-icon.bg-success {
+    background-color: rgba(25, 135, 84, 0.2);
+    color: #198754;
+  }
+  
+  .stats-icon.bg-warning {
+    background-color: rgba(255, 193, 7, 0.2);
+    color: #ffc107;
+  }
+  
+  .stats-icon.bg-info {
+    background-color: rgba(13, 202, 240, 0.2);
+    color: #0dcaf0;
+  }
+  
+  .stats-icon.bg-danger {
+    background-color: rgba(220, 53, 69, 0.2);
+    color: #dc3545;
+  }
+  
+  .stats-icon.bg-secondary {
+    background-color: rgba(108, 117, 125, 0.2);
+    color: #6c757d;
+  }
+  
+  :host {
+    display: block;
+  }
+  
+  :host ::ng-deep {
+    --completion-rate: 0;
+  }
+  
+  h4 {
+    font-weight: 600;
+  }
+  
+  h6 {
+    color: #6c757d;
+  }

@@ -193,4 +193,12 @@
         </div>
       </form>
     </div>
+  
+    <!-- Time tracking section - visible only for programmers viewing their assigned tasks -->
+    <div *ngIf="!loading && !error && task && authService.isProgrammer() && task.assigneeId === authService.currentUserValue?.id" class="mt-4">
+      <app-time-tracking 
+        [task]="task"
+        (timeLogged)="onTimeLogged($event)">
+      </app-time-tracking>
+    </div>
   </div>

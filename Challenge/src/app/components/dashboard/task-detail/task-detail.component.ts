@@ -1,16 +1,26 @@
+// src/app/components/dashboard/task-detail/task-detail.component.ts
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService, Task } from '../../../services/task.service';
 import { AuthService } from '../../../services/auth-service.service';
 import { ProjectService } from '../../../services/project.service';
+import { TimeTrackingComponent } from '../time-tracking/time-tracking.component';
+
+interface TimeEntry {
+  taskId: number;
+  taskName: string;
+  date: string;
+  hours: number;
+  notes: string;
+}
 
 @Component({
   selector: 'app-task-detail',
   templateUrl: './task-detail.component.html',
   styleUrls: ['./task-detail.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, TimeTrackingComponent]
 })
 export class TaskDetailComponent implements OnInit {
   @Input() taskId!: number;
@@ -196,6 +206,15 @@ export class TaskDetailComponent implements OnInit {
         console.error('Error updating task status', err);
       }
     });
+  }
+
+  // Handle time logged from time tracking component
+  onTimeLogged(entry: TimeEntry): void {
+    // In a production app, you would update the task or save this data
+    console.log('Time logged:', entry);
+    
+    // Optionally show a success message
+    // You could add a toast notification system here
   }
 
   // Helper functions

@@ -176,19 +176,6 @@
                     <i class="bi bi-eye"></i>
                   </button>
                   
-                  <!-- Status dropdown for Project Managers -->
-                  <div class="dropdown" *ngIf="authService.isProjectManager()">
-                    <button class="btn btn-sm btn-outline-primary dropdown-toggle me-1" type="button" data-bs-toggle="dropdown">
-                      Status
-                    </button>
-                    <ul class="dropdown-menu">
-                      <li><a class="dropdown-item" (click)="updateTaskStatus(task.id, 'Pendente')">Pendente</a></li>
-                      <li><a class="dropdown-item" (click)="updateTaskStatus(task.id, 'Em Progresso')">Em Progresso</a></li>
-                      <li><a class="dropdown-item" (click)="updateTaskStatus(task.id, 'Bloqueada')">Bloqueada</a></li>
-                      <li><a class="dropdown-item" (click)="updateTaskStatus(task.id, 'Concluída')">Concluída</a></li>
-                    </ul>
-                  </div>
-                  
                   <!-- Complete button for Programmers assigned to this task -->
                   <button 
                     *ngIf="authService.isProgrammer() && task.assigneeId === authService.currentUserValue?.id && task.status !== 'Concluída'"

@@ -181,6 +181,13 @@ namespace ChallengeServer.Controllers
                     return Unauthorized(new { message = "User not authenticated properly" });
                 }
 
+                // Get user type from claims
+                var userType = User.FindFirstValue("UserType");
+                if (string.IsNullOrEmpty(userType) || !int.TryParse(userType, out int userTypeId))
+                {
+                    return Unauthorized(new { message = "User type not determined" });
+                }
+
                 // Get the task
                 var task = await _context.Tasks
                     .Include(t => t.Project)
@@ -195,6 +202,12 @@ namespace ChallengeServer.Controllers
                 if (task.Project.ManagerId != currentUserId)
                 {
                     return Forbid();
+                }
+
+                // Prevent Project Managers from changing the status
+                if (userTypeId == 1 && !string.IsNullOrEmpty(taskDto.Status) && taskDto.Status != task.Status)
+                {
+                    return BadRequest(new { message = "Project Managers cannot update task status" });
                 }
 
                 // If assignee is being changed, verify the new assignee is valid
@@ -221,7 +234,8 @@ namespace ChallengeServer.Controllers
                     task.Deadline = taskDto.Deadline.Value;
                 }
 
-                if (!string.IsNullOrEmpty(taskDto.Status))
+                // Only update status if we're not a Project Manager (this is redundant now with the check above)
+                if (!string.IsNullOrEmpty(taskDto.Status) && userTypeId != 1)
                 {
                     task.Status = taskDto.Status;
                     
@@ -281,6 +295,12 @@ namespace ChallengeServer.Controllers
                     return Unauthorized(new { message = "User type not determined" });
                 }
 
+                // Only allow Programmers to update task status
+                if (userTypeId != 2) // 2 = Programmer
+                {
+                    return BadRequest(new { message = "Only Programmers can update task status" });
+                }
+
                 // Get the task
                 var task = await _context.Tasks
                     .Include(t => t.Project)
@@ -291,19 +311,14 @@ namespace ChallengeServer.Controllers
                     return NotFound(new { message = "Task not found" });
                 }
 
-                // Project Manager (type 1) can update status for tasks in their projects
-                if (userTypeId == 1 && task.Project.ManagerId != currentUserId)
-                {
-                    return Forbid();
-                }
                 // Programmer (type 2) can only update status for tasks assigned to them
-                else if (userTypeId == 2 && task.AssigneeId != currentUserId)
+                if (task.AssigneeId != currentUserId)
                 {
                     return Forbid();
                 }
 
                 // Programmers can only mark tasks as completed
-                if (userTypeId == 2 && statusDto.Status != "Concluída")
+                if (statusDto.Status != "Concluída")
                 {
                     return BadRequest(new { message = "Programmers can only mark tasks as completed" });
                 }

@@ -1,0 +1,109 @@
+<!-- src/app/components/dashboard/task-statistics/task-statistics.component.html -->
+<div class="card h-100 shadow-sm">
+    <div class="card-header bg-primary text-white">
+      <h5 class="card-title mb-0">My Task Statistics</h5>
+    </div>
+    
+    <div class="card-body text-center" *ngIf="loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading statistics...</span>
+      </div>
+      <p class="mt-2">Loading statistics...</p>
+    </div>
+    
+    <div class="card-body" *ngIf="error">
+      <div class="alert alert-danger">
+        {{ error }}
+        <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadStats()">
+          Try Again
+        </button>
+      </div>
+    </div>
+    
+    <div class="card-body" *ngIf="!loading && !error && stats">
+      <div class="row text-center mb-4">
+        <div class="col-12">
+          <div class="completion-circle">
+            <div class="circle-info">
+              <h2 class="mb-0">{{ getCompletionPercentage() }}</h2>
+              <p class="text-muted mb-0">Completion Rate</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="row">
+        <div class="col-6 mb-3">
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-primary">
+              <i class="bi bi-list-check"></i>
+            </div>
+            <div class="ms-3">
+              <h6 class="mb-0">Total Tasks</h6>
+              <h4 class="mb-0">{{ stats.totalTasks }}</h4>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-6 mb-3">
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-success">
+              <i class="bi bi-check-circle"></i>
+            </div>
+            <div class="ms-3">
+              <h6 class="mb-0">Completed</h6>
+              <h4 class="mb-0">{{ stats.completedTasks }}</h4>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-6 mb-3">
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-warning">
+              <i class="bi bi-hourglass-split"></i>
+            </div>
+            <div class="ms-3">
+              <h6 class="mb-0">Pending</h6>
+              <h4 class="mb-0">{{ stats.pendingTasks }}</h4>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-6 mb-3">
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-info">
+              <i class="bi bi-arrow-repeat"></i>
+            </div>
+            <div class="ms-3">
+              <h6 class="mb-0">In Progress</h6>
+              <h4 class="mb-0">{{ stats.inProgressTasks }}</h4>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-6 mb-3">
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-danger">
+              <i class="bi bi-exclamation-triangle"></i>
+            </div>
+            <div class="ms-3">
+              <h6 class="mb-0">Overdue</h6>
+              <h4 class="mb-0">{{ stats.overdueTasks }}</h4>
+            </div>
+          </div>
+        </div>
+        
+        <div class="col-6 mb-3">
+          <div class="d-flex align-items-center">
+            <div class="stats-icon bg-secondary">
+              <i class="bi bi-lock"></i>
+            </div>
+            <div class="ms-3">
+              <h6 class="mb-0">Blocked</h6>
+              <h4 class="mb-0">{{ stats.blockedTasks }}</h4>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>

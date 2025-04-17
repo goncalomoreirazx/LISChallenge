@@ -1,3 +1,4 @@
+// src/app/app.routes.ts
 import { Routes } from '@angular/router';
 import { LoginComponent } from '../app/pages/login/login.component';
 import { RegisterComponent } from '../app/pages/register/register.component';
@@ -7,6 +8,7 @@ import { ProjectsComponent } from './pages/projects/projects.component';
 import { ProjectListComponent } from './components/dashboard/project-list/project-list.component';
 import { ProjectDetailComponent } from './components/dashboard/project-details/project-details.component';
 import { TaskDetailComponent } from './components/dashboard/task-detail/task-detail.component';
+import { ProgrammerTasksComponent } from './pages/programmer-tasks/programmer-tasks.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
@@ -42,7 +44,7 @@ export const routes: Routes = [
   },
   { 
     path: 'tarefas', // Programmer specific route
-    component: DashboardComponent,
+    component: ProgrammerTasksComponent,
     canActivate: [AuthGuard],
     data: { requiredUserType: 2 } // 2 = Programmer
   },

@@ -1,0 +1,177 @@
+<!-- src/app/pages/programmer-tasks/programmer-tasks.component.html -->
+<div class="dashboard-container" [class.sidebar-collapsed]="sidebarCollapsed">
+  <!-- Sidebar -->
+  <app-sidebar (sidebarStateChanged)="onSidebarStateChanged($event)"></app-sidebar>
+  
+  <!-- Main Content -->
+  <div class="content-area">
+    <!-- Top navigation -->
+    <nav class="navbar navbar-expand navbar-light bg-white shadow-sm mb-4">
+      <div class="container-fluid">
+        <span class="navbar-brand">My Tasks</span>
+        <div class="ms-auto d-flex align-items-center">
+          <div class="dropdown">
+            <button class="btn d-flex align-items-center" type="button" data-bs-toggle="dropdown">
+              <img src="https://via.placeholder.com/40" class="rounded-circle me-2" alt="User">
+              <span>{{ authService.currentUserValue?.fullName || 'User' }}</span>
+              <i class="bi bi-chevron-down ms-2"></i>
+            </button>
+            <ul class="dropdown-menu dropdown-menu-end">
+              <li><a class="dropdown-item" routerLink="/profile"><i class="bi bi-person me-2"></i>Profile</a></li>
+              <li><a class="dropdown-item" routerLink="/settings"><i class="bi bi-gear me-2"></i>Settings</a></li>
+              <li><hr class="dropdown-divider"></li>
+              <li><a class="dropdown-item" (click)="logout()" style="cursor: pointer;"><i class="bi bi-box-arrow-right me-2"></i>Logout</a></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </nav>
+    
+    <!-- Page content -->
+    <div class="container-fluid">
+      <!-- Task Detail View -->
+      <div *ngIf="selectedTaskId" class="row mb-4">
+        <div class="col-12">
+          <app-task-detail 
+            [taskId]="selectedTaskId" 
+            [projectId]="0" 
+            (closeDetail)="closeTaskDetail()" 
+            (taskUpdated)="onTaskUpdated()">
+          </app-task-detail>
+        </div>
+      </div>
+      
+      <!-- Task List View with Statistics -->
+      <div *ngIf="!selectedTaskId">
+        <!-- Statistics Row -->
+        <div class="row mb-4">
+          <div class="col-lg-4 mb-4 mb-lg-0">
+            <app-task-statistics></app-task-statistics>
+          </div>
+          
+          <div class="col-lg-8">
+            <div class="card h-100 shadow-sm">
+              <div class="card-header bg-white">
+                <h5 class="card-title mb-0">Recent Activity</h5>
+              </div>
+              <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                  <div class="list-group-item py-3" *ngFor="let activity of recentActivities">
+                    <div class="d-flex w-100 justify-content-between">
+                      <h6 class="mb-1">{{ activity.message }}</h6>
+                      <small class="text-muted">{{ activity.time }}</small>
+                    </div>
+                    <p class="mb-1 text-muted">{{ activity.details }}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Filters and Search -->
+        <div class="row mb-4">
+          <div class="col-md-6 mb-3 mb-md-0">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-search"></i></span>
+              <input 
+                type="text" 
+                class="form-control" 
+                placeholder="Search tasks..." 
+                [(ngModel)]="searchQuery"
+                (ngModelChange)="onSearchChange()">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <div class="d-flex justify-content-md-end">
+              <select 
+                class="form-select" 
+                style="width: auto;" 
+                [(ngModel)]="statusFilter"
+                (ngModelChange)="onStatusFilterChange()">
+                <option value="all">All Statuses</option>
+                <option value="Pendente">Pendente</option>
+                <option value="Em Progresso">Em Progresso</option>
+                <option value="Concluída">Concluída</option>
+                <option value="Bloqueada">Bloqueada</option>
+              </select>
+            </div>
+          </div>
+        </div>
+        
+        <!-- Task cards -->
+        <div class="row">
+          <!-- Loading indicator -->
+          <div class="col-12 text-center" *ngIf="loading">
+            <div class="spinner-border text-primary" role="status">
+              <span class="visually-hidden">Loading tasks...</span>
+            </div>
+            <p class="mt-2">Loading your tasks...</p>
+          </div>
+          
+          <!-- Error message -->
+          <div class="col-12" *ngIf="error && !loading">
+            <div class="alert alert-danger">
+              {{ error }}
+              <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadTasks()">Try Again</button>
+            </div>
+          </div>
+          
+          <!-- No tasks message -->
+          <div class="col-12 text-center py-5" *ngIf="!loading && !error && filteredTasks.length === 0">
+            <i class="bi bi-clipboard-check text-muted display-1"></i>
+            <h4 class="mt-3">No tasks found</h4>
+            <p class="text-muted">
+              <span *ngIf="statusFilter !== 'all' || searchQuery">Try changing your filters</span>
+              <span *ngIf="statusFilter === 'all' && !searchQuery">You don't have any tasks assigned yet</span>
+            </p>
+          </div>
+          
+          <!-- Task cards -->
+          <div class="col-md-6 col-lg-4 mb-4" *ngFor="let task of filteredTasks">
+            <div class="card h-100 shadow-sm hover-lift transition-all" 
+                [ngClass]="{'border-warning': isOverdue(task.deadline) && task.status !== 'Concluída'}">
+              <div class="card-header d-flex justify-content-between align-items-center">
+                <span [ngClass]="getStatusClass(task.status)">{{ task.status }}</span>
+                <small class="text-muted">Project: {{ task.projectName }}</small>
+              </div>
+              <div class="card-body">
+                <h5 class="card-title">{{ task.name }}</h5>
+                <p class="card-text" *ngIf="task.description">
+                  {{ task.description.length > 100 ? task.description.substring(0, 100) + '...' : task.description }}
+                </p>
+                
+                <div class="d-flex justify-content-between align-items-center mb-3">
+                  <div>
+                    <i class="bi bi-calendar me-1"></i>
+                    <span [ngClass]="{'text-danger fw-bold': isOverdue(task.deadline) && task.status !== 'Concluída'}">
+                      {{ formatDate(task.deadline) }}
+                    </span>
+                    <small 
+                      *ngIf="isOverdue(task.deadline) && task.status !== 'Concluída'" 
+                      class="text-danger ms-1">
+                      Overdue
+                    </small>
+                  </div>
+                </div>
+              </div>
+              <div class="card-footer bg-transparent">
+                <div class="d-flex justify-content-between">
+                  <button class="btn btn-sm btn-outline-primary" (click)="viewTaskDetails(task.id)">
+                    <i class="bi bi-eye me-1"></i> View Details
+                  </button>
+                  <button 
+                    *ngIf="task.status !== 'Concluída'" 
+                    class="btn btn-sm btn-success" 
+                    (click)="markTaskAsComplete(task.id)">
+                    <i class="bi bi-check-circle me-1"></i> Complete
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

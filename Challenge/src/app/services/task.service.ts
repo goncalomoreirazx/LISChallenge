@@ -1,3 +1,4 @@
+// Updated src/app/services/task.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
@@ -13,6 +14,7 @@ export interface Task {
   status: string;
   completedAt: string | null;
   projectId: number;
+  projectName: string;
   assigneeId: number;
   assigneeName?: string;
 }
@@ -30,6 +32,26 @@ export class TaskService {
     return this.http.get<Task[]>(`${environment.apiUrl}/projects/${projectId}/tasks`).pipe(
       catchError(error => {
         console.error(`Error fetching tasks for project ${projectId}:`, error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Get all tasks assigned to the current programmer
+  getProgrammerTasks(): Observable<Task[]> {
+    return this.http.get<Task[]>(`${this.apiUrl}/my-tasks`).pipe(
+      catchError(error => {
+        console.error('Error fetching programmer tasks:', error);
+        return throwError(() => error);
+      })
+    );
+  }
+
+  // Get tasks by status for the current programmer
+  getProgrammerTasksByStatus(status: string): Observable<Task[]> {
+    return this.http.get<Task[]>(`${this.apiUrl}/my-tasks?status=${status}`).pipe(
+      catchError(error => {
+        console.error(`Error fetching programmer tasks with status ${status}:`, error);
         return throwError(() => error);
       })
     );

@@ -1,0 +1,55 @@
+<!-- src/app/components/dashboard/upcoming-deadlines/upcoming-deadlines.component.html -->
+<div class="card h-100 shadow-sm">
+    <div class="card-header bg-danger text-white">
+      <h5 class="card-title mb-0">Upcoming Deadlines</h5>
+    </div>
+    
+    <div class="card-body text-center" *ngIf="loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading upcoming deadlines...</span>
+      </div>
+      <p class="mt-2">Loading upcoming deadlines...</p>
+    </div>
+    
+    <div class="card-body" *ngIf="error">
+      <div class="alert alert-danger">
+        {{ error }}
+        <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadUpcomingTasks()">
+          Try Again
+        </button>
+      </div>
+    </div>
+    
+    <div class="card-body p-0" *ngIf="!loading && !error">
+      <div *ngIf="upcomingTasks.length === 0" class="text-center py-4">
+        <i class="bi bi-calendar-check text-muted fs-1"></i>
+        <p class="mt-2">No upcoming deadlines in the next 7 days</p>
+      </div>
+      
+      <ul class="list-group list-group-flush" *ngIf="upcomingTasks.length > 0">
+        <li class="list-group-item" *ngFor="let task of upcomingTasks">
+          <div class="d-flex justify-content-between align-items-start">
+            <div>
+              <h6 class="mb-1">{{ task.name }}</h6>
+              <div class="d-flex align-items-center">
+                <span [ngClass]="getStatusClass(task.status)" class="me-2">{{ task.status }}</span>
+                <small class="text-muted">{{ task.projectName }}</small>
+              </div>
+            </div>
+            <div class="text-end">
+              <div class="fw-bold" [ngClass]="getUrgencyClass(getDaysRemaining(task.deadline))">
+                {{ getDaysRemaining(task.deadline) }} days left
+              </div>
+              <small class="text-muted">Due: {{ formatDate(task.deadline) }}</small>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
+    
+    <div class="card-footer bg-transparent text-center" *ngIf="!loading && !error && upcomingTasks.length > 0">
+      <a routerLink="/tarefas" class="btn btn-sm btn-outline-danger">
+        View All Tasks
+      </a>
+    </div>
+  </div>

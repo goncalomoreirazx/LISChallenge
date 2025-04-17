@@ -1,0 +1,18 @@
+/* src/app/components/dashboard/time-tracking/time-tracking.component.css */
+.list-group-item {
+    transition: background-color 0.2s;
+  }
+  
+  .list-group-item:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+  }
+  
+  .form-control:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+  }
+  
+  .badge {
+    font-weight: 500;
+    padding: 6px 10px;
+  }
