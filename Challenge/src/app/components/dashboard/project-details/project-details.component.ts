@@ -5,6 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ProjectService, Project } from '../../../services/project.service';
 import { AuthService, User } from '../../../services/auth-service.service';
 import { UserService } from '../../../services/user.service';
+import { TaskListComponent } from '../../dashboard/task-list/task-list.component';
 
 declare var bootstrap: any; // For Bootstrap modal
 
@@ -13,7 +14,7 @@ declare var bootstrap: any; // For Bootstrap modal
   templateUrl: './project-details.component.html',
   styleUrls: ['./project-details.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule]
+  imports: [CommonModule, FormsModule, TaskListComponent]
 })
 export class ProjectDetailComponent implements OnInit {
   projectId!: number;

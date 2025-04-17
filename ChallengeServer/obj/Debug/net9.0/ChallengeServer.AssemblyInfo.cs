@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ChallengeServer")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+0162d4defb63531223eb50e3865a5fc1c46b4713")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+9fd91e4e1dd4dffe39c270737c98994cbd4889bf")]
 [assembly: System.Reflection.AssemblyProductAttribute("ChallengeServer")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ChallengeServer")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

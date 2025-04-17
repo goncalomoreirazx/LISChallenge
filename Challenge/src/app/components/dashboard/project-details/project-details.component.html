@@ -98,19 +98,15 @@
         </div>
       </div>
       
-      <!-- Tasks section would go here in the future -->
+      <!-- Tasks section  -->
       <div class="card">
-        <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card-header">
           <h5 class="mb-0">Tasks</h5>
-          <button class="btn btn-sm btn-primary" disabled>
-            <i class="bi bi-plus-circle me-1"></i> Add Task
-          </button>
         </div>
-        <div class="card-body text-center">
-          <p class="text-muted">Task management will be implemented in the next phase.</p>
+        <div class="card-body p-0">
+          <app-task-list [projectId]="projectId"></app-task-list>
         </div>
       </div>
-    </div>
     
     <!-- Project edit form -->
     <div class="card-body" *ngIf="!loading && !error && project && isEditing">

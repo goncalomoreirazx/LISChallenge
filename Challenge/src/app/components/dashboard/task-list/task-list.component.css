@@ -1,0 +1,82 @@
+.card-header .btn {
+    transition: all 0.3s;
+  }
+  
+  .card-header .btn:hover {
+    transform: translateY(-2px);
+  }
+  
+  .table-responsive {
+    overflow-x: auto;
+  }
+  
+  .table th, .table td {
+    vertical-align: middle;
+  }
+  
+  /* Animation for adding new items */
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+  
+  .table tr {
+    animation: fadeIn 0.3s ease-out forwards;
+  }
+  
+  /* Status badges */
+  .badge {
+    min-width: 100px;
+    padding: 6px 10px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  
+  /* Style for dropdown items */
+  .dropdown-item {
+    cursor: pointer;
+  }
+  
+  .dropdown-item:active {
+    background-color: #0d6efd;
+    color: white;
+  }
+  
+  /* Form styling */
+  .form-control:focus {
+    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+  }
+  
+  textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+  
+  /* Make overdue tasks visually stand out */
+  .text-danger.fw-bold {
+    animation: pulse 2s infinite;
+  }
+  
+  @keyframes pulse {
+    0% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.7;
+    }
+    100% {
+      opacity: 1;
+    }
+  }
+  
+  /* Hover effect for table rows */
+  .table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.05);
+    transition: background-color 0.2s;
+  }

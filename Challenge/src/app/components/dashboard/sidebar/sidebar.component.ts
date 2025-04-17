@@ -66,7 +66,8 @@ export class SidebarComponent implements OnInit {
     // Only add Projects for Project Managers (type 1)
     if (user && user.userType === 1) {
       this.menuItems.push(
-        { icon: 'bi bi-bar-chart', label: 'Projectos', link: '/projectos' }
+        { icon: 'bi bi-bar-chart', label: 'Projectos', link: '/projectos' },
+        { icon: 'bi bi-gear', label: 'Tarefas', link: '/tarefas' }
       );
     }
     

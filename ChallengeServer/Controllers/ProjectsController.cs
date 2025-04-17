@@ -396,6 +396,80 @@ public async Task<ActionResult<IEnumerable<User>>> GetProjectProgrammers(int id)
     }
 }
 
+[HttpGet("{id}/tasks")]
+public async Task<ActionResult<IEnumerable<TaskDto>>> GetProjectTasks(int id)
+{
+    try
+    {
+        // Get current user ID from claims
+        var userId = User.FindFirstValue("Id");
+        if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
+        {
+            return Unauthorized(new { message = "User not authenticated properly" });
+        }
+
+        // Get user type from claims
+        var userType = User.FindFirstValue("UserType");
+        if (string.IsNullOrEmpty(userType) || !int.TryParse(userType, out int userTypeId))
+        {
+            return Unauthorized(new { message = "User type not determined" });
+        }
+
+        // Check if the project exists
+        var project = await _context.Projects.FindAsync(id);
+        if (project == null)
+        {
+            return NotFound(new { message = "Project not found" });
+        }
+
+        // Project Manager (type 1) can only see tasks for projects they manage
+        if (userTypeId == 1 && project.ManagerId != currentUserId)
+        {
+            return Forbid();
+        }
+        // Programmer (type 2) can only see tasks assigned to them in this project
+        else if (userTypeId == 2 && !await _context.Tasks.AnyAsync(t => t.ProjectId == id && t.AssigneeId == currentUserId))
+        {
+            return Forbid();
+        }
+
+        // Get tasks for the project
+        IQueryable<ProjectTask> tasksQuery = _context.Tasks
+            .Include(t => t.Assignee)
+            .Where(t => t.ProjectId == id);
+
+        // For programmers, only return tasks assigned to them
+        if (userTypeId == 2)
+        {
+            tasksQuery = tasksQuery.Where(t => t.AssigneeId == currentUserId);
+        }
+
+        var tasks = await tasksQuery.ToListAsync();
+
+        // Map to DTOs
+        var taskDtos = tasks.Select(t => new TaskDto
+        {
+            Id = t.Id,
+            Name = t.Name,
+            Description = t.Description,
+            CreatedAt = t.CreatedAt,
+            Deadline = t.Deadline,
+            Status = t.Status,
+            CompletedAt = t.CompletedAt,
+            ProjectId = t.ProjectId,
+            AssigneeId = t.AssigneeId,
+            AssigneeName = t.Assignee.FullName,
+            ProjectName = project.Name
+        }).ToList();
+
+        return Ok(taskDtos);
+    }
+    catch (Exception ex)
+    {
+        _logger.LogError(ex, "Error retrieving tasks for project with ID {ProjectId}", id);
+        return StatusCode(500, new { message = "Internal server error" });
+    }
+}
 
         private bool ProjectExists(int id)
         {
