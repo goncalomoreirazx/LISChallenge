@@ -60,9 +60,8 @@ export const AuthInterceptor: HttpInterceptorFn = (
       if (error.status === 401 && isBrowser) {
         console.log('401 Unauthorized - logging out');
         // If unauthorized, log out the user and redirect to login page
-        authService.logout().subscribe(() => {
-          router.navigate(['/login']);
-        });
+        authService.logout();
+        router.navigate(['/login']);
       }
       return throwError(() => error);
     })

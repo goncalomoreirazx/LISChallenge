@@ -40,8 +40,6 @@
       </div>
       
       <div class="mb-3">
-        <span [ngClass]="getStatusClass(task.status)" class="mb-2 d-inline-block">{{ task.status }}</span>
-        
         <!-- Status actions for Project Managers -->
         <div class="btn-group ms-2" *ngIf="authService.isProjectManager()">
           <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -54,14 +52,36 @@
             <li><a class="dropdown-item" (click)="updateTaskStatus('Concluída')">Concluída</a></li>
           </ul>
         </div>
-        
-        <!-- Complete button for Programmers assigned to this task -->
-        <button 
-          *ngIf="authService.isProgrammer() && task.assigneeId === authService.currentUserValue?.id && task.status !== 'Concluída'"
-          class="btn btn-sm btn-success ms-2" 
-          (click)="updateTaskStatus('Concluída')">
-          <i class="bi bi-check-circle me-1"></i> Mark as Complete
-        </button>
+
+        <div class="mb-3">
+          <span [ngClass]="getStatusClass(task.status)" class="mb-2 d-inline-block">{{ task.status }}</span>
+          
+          <!-- Status dropdown specifically for programmers -->
+          <div class="btn-group ms-2" *ngIf="authService.isProgrammer() && task.assigneeId === authService.currentUserValue?.id">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              Change Status
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" (click)="updateTaskStatus('Pendente')">Pendente</a></li>
+              <li><a class="dropdown-item" (click)="updateTaskStatus('Em Progresso')">Em Progresso</a></li>
+              <!-- "Bloqueada" option is removed for programmers -->
+              <li><a class="dropdown-item" (click)="updateTaskStatus('Concluída')">Concluída</a></li>
+            </ul>
+          </div>
+          
+          <!-- Project Manager dropdown with all options (including Bloqueada) -->
+          <div class="btn-group ms-2" *ngIf="authService.isProjectManager()">
+            <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+              Change Status
+            </button>
+            <ul class="dropdown-menu">
+              <li><a class="dropdown-item" (click)="updateTaskStatus('Pendente')">Pendente</a></li>
+              <li><a class="dropdown-item" (click)="updateTaskStatus('Em Progresso')">Em Progresso</a></li>
+              <li><a class="dropdown-item" (click)="updateTaskStatus('Bloqueada')">Bloqueada</a></li>
+              <li><a class="dropdown-item" (click)="updateTaskStatus('Concluída')">Concluída</a></li>
+            </ul>
+          </div>
+        </div>
       </div>
       
       <div class="row mb-4">
@@ -162,7 +182,7 @@
           </div>
         </div>
         
-        <div class="mb-3">
+        <div class="mb-3" *ngIf="isEditing">
           <label for="taskStatus" class="form-label">Status</label>
           <select 
             class="form-select" 
@@ -171,7 +191,8 @@
             [(ngModel)]="editedTask.status">
             <option value="Pendente">Pendente</option>
             <option value="Em Progresso">Em Progresso</option>
-            <option value="Bloqueada">Bloqueada</option>
+            <!-- Show Bloqueada option only for Project Managers -->
+            <option value="Bloqueada" *ngIf="authService.isProjectManager()">Bloqueada</option>
             <option value="Concluída">Concluída</option>
           </select>
         </div>

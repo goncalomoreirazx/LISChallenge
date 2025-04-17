@@ -114,59 +114,62 @@ export class TaskDetailComponent implements OnInit {
   }
 
   // Submit edited task
-  submitEditedTask(): void {
-    // Validate form
-    if (!this.editedTask.name) {
-      this.formError = 'Task name is required';
-      return;
-    }
-    
-    if (!this.editedTask.deadline) {
-      this.formError = 'Deadline is required';
-      return;
-    }
-    
-    if (this.editedTask.assigneeId === 0) {
-      this.formError = 'You must select a programmer';
-      return;
-    }
+submitEditedTask(): void {
+  // Validate form
+  if (!this.editedTask.name) {
+    this.formError = 'Task name is required';
+    return;
+  }
   
-    this.isSubmitting = true;
-    this.formError = null;
-    
-    // Create a clean object with only the fields to update
-    const taskToUpdate = {
-      name: this.editedTask.name.trim(),
-      description: this.editedTask.description,
-      deadline: new Date(this.editedTask.deadline).toISOString(),
-      assigneeId: this.editedTask.assigneeId,
-      status: this.editedTask.status
-    };
+  if (!this.editedTask.deadline) {
+    this.formError = 'Deadline is required';
+    return;
+  }
   
-    this.taskService.updateTask(this.taskId, taskToUpdate).subscribe({
-      next: () => {
-        // Exit edit mode and reload task
-        this.isEditing = false;
-        this.isSubmitting = false;
-        this.loadTask();
-        
-        // Notify parent component that task was updated
-        this.taskUpdated.emit();
-      },
-      error: (err) => {
-        this.isSubmitting = false;
-        if (err.error && err.error.message) {
-          this.formError = err.error.message;
-        } else if (err.status === 400) {
-          this.formError = 'Invalid task data. Please check your inputs.';
-        } else {
-          this.formError = 'Failed to update task. Please try again.';
-        }
-        console.error('Error updating task', err);
-      }
-    });
+  if (this.editedTask.assigneeId === 0) {
+    this.formError = 'You must select a programmer';
+    return;
   }
 
+  this.isSubmitting = true;
+  this.formError = null;
+  
+  // Create a clean object with only the fields to update
+  const taskToUpdate: any = {
+    name: this.editedTask.name.trim(),
+    description: this.editedTask.description,
+    deadline: new Date(this.editedTask.deadline).toISOString(),
+    assigneeId: this.editedTask.assigneeId
+  };
+  
+  // Only add status if user is a programmer
+  if (this.authService.isProgrammer()) {
+    taskToUpdate.status = this.editedTask.status;
+  }
+
+  this.taskService.updateTask(this.taskId, taskToUpdate).subscribe({
+    next: () => {
+      // Exit edit mode and reload task
+      this.isEditing = false;
+      this.isSubmitting = false;
+      this.loadTask();
+      
+      // Notify parent component that task was updated
+      this.taskUpdated.emit();
+    },
+    error: (err) => {
+      this.isSubmitting = false;
+      if (err.error && err.error.message) {
+        this.formError = err.error.message;
+      } else if (err.status === 400) {
+        this.formError = 'Invalid task data. Please check your inputs.';
+      } else {
+        this.formError = 'Failed to update task. Please try again.';
+      }
+      console.error('Error updating task', err);
+    }
+  });
+}
   // Delete the current task
   deleteTask(): void {
     if (confirm('Are you sure you want to delete this task? This cannot be undone.')) {

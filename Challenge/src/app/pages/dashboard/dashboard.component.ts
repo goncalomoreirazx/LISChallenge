@@ -4,13 +4,15 @@ import { RouterLink } from '@angular/router';
 import { SidebarComponent } from '../../components/dashboard/sidebar/sidebar.component';
 import { AuthService, User } from '../../services/auth-service.service';
 import { ProjectService, Project } from '../../services/project.service';
+import { TaskService, Task } from '../../services/task.service';
+import { UpcomingDeadlinesComponent } from '../../components/dashboard/upcoming-deadlines/upcoming-deadlines.component';
 
 @Component({
   selector: 'app-dashboard',
   templateUrl: './dashboard.component.html',
   styleUrls: ['./dashboard.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterLink, SidebarComponent]
+  imports: [CommonModule, RouterLink, SidebarComponent, UpcomingDeadlinesComponent]
 })
 export class DashboardComponent implements OnInit {
   // Track sidebar collapsed state
@@ -19,30 +21,23 @@ export class DashboardComponent implements OnInit {
   // Current logged in user
   currentUser: User | null = null;
   
-  // Projects for Project Managers
+  // Projects
   projects: Project[] = [];
-  loading = false;
   
-  // Sample data for dashboard cards
-  stats = [
-    { title: 'Users', value: '1,254', icon: 'bi bi-people', color: 'primary' },
-    { title: 'Sales', value: '$12,345', icon: 'bi bi-currency-dollar', color: 'success' },
-    { title: 'Orders', value: '234', icon: 'bi bi-cart', color: 'info' },
-    { title: 'Returns', value: '21', icon: 'bi bi-arrow-counterclockwise', color: 'warning' }
-  ];
+  // Tasks
+  recentTasks: Task[] = [];
   
-  // Sample data for recent activity
-  recentActivities = [
-    { id: 1, action: 'New user registered', user: 'John Doe', time: '5 minutes ago' },
-    { id: 2, action: 'New order placed', user: 'Jane Smith', time: '30 minutes ago' },
-    { id: 3, action: 'Payment received', user: 'Alice Johnson', time: '1 hour ago' },
-    { id: 4, action: 'Customer support ticket closed', user: 'Bob Brown', time: '2 hours ago' },
-    { id: 5, action: 'New comment received', user: 'Charlie Davis', time: '3 hours ago' }
-  ];
+  // Statistics
+  totalTasks = 0;
+  completedTasks = 0;
+  overdueTasks = 0;
+  
+  loading = true;
   
   constructor(
     public authService: AuthService,
     private projectService: ProjectService,
+    private taskService: TaskService,
     @Inject(PLATFORM_ID) private platformId: Object
   ) {}
   
@@ -51,27 +46,81 @@ export class DashboardComponent implements OnInit {
       // Get the current user
       this.currentUser = this.authService.currentUserValue;
       
-      // Subscribe to user changes (in case user data changes during the session)
-      this.authService.currentUser$.subscribe(user => {
-        this.currentUser = user;
-      });
-      
-      // Load projects if user is a project manager
-      if (this.authService.isProjectManager()) {
-        this.loadProjects();
-      }
+      // Load data for all users
+      this.loadDashboardData();
     }
   }
   
-  // Load projects for project managers
-  loadProjects() {
+  // Load data for all users
+  loadDashboardData() {
     this.loading = true;
     
+    // Load projects
     this.projectService.getProjects().subscribe({
-      next: (data) => {
-        // Get only the first 5 projects for the dashboard
-        this.projects = data.slice(0, 5);
-        this.loading = false;
+      next: (projects) => {
+        // Get most recent projects
+        this.projects = projects.slice(0, 5);
+        
+        // Count total tasks across all projects
+        let totalTaskCount = 0;
+        let completedTaskCount = 0;
+        let overdueTaskCount = 0;
+        let allTasks: Task[] = [];
+        
+        // For each project, get tasks
+        const projectIds = projects.map(p => p.id);
+        
+        if (projectIds.length === 0) {
+          this.loading = false;
+          return;
+        }
+        
+        // Track number of completed requests
+        let completedRequests = 0;
+        
+        // If there are projects, fetch their tasks
+        projectIds.forEach(id => {
+          this.taskService.getProjectTasks(id).subscribe({
+            next: (tasks) => {
+              allTasks = [...allTasks, ...tasks];
+              totalTaskCount += tasks.length;
+              completedTaskCount += tasks.filter(t => t.status === 'Concluída').length;
+              
+              const now = new Date();
+              overdueTaskCount += tasks.filter(t => 
+                new Date(t.deadline) < now && t.status !== 'Concluída'
+              ).length;
+              
+              // Update stats
+              this.totalTasks = totalTaskCount;
+              this.completedTasks = completedTaskCount;
+              this.overdueTasks = overdueTaskCount;
+              
+              // Count completed requests
+              completedRequests++;
+              
+              // Once all requests are completed, sort tasks by deadline and get most recent
+              if (completedRequests === projectIds.length) {
+                // Sort by deadline (closest first)
+                allTasks.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+                
+                // Take most recent 5 tasks
+                this.recentTasks = allTasks.slice(0, 5);
+                this.loading = false;
+              }
+            },
+            error: (err) => {
+              console.error(`Error loading tasks for project ${id}`, err);
+              
+              // Still count as completed to avoid getting stuck
+              completedRequests++;
+              
+              if (completedRequests === projectIds.length) {
+                this.loading = false;
+              }
+            }
+          });
+        });
       },
       error: (err) => {
         console.error('Error loading projects for dashboard', err);
@@ -80,12 +129,11 @@ export class DashboardComponent implements OnInit {
     });
   }
   
-  // Receive sidebar state changes - handle the event with correct typing
+  // Receive sidebar state changes
   onSidebarStateChanged(event: boolean) {
-    setTimeout(() => {
-      this.sidebarCollapsed = event;
-    }, 0);
+    this.sidebarCollapsed = event;
   }
+  
   // Format date for display
   formatDate(dateString: string): string {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -95,9 +143,25 @@ export class DashboardComponent implements OnInit {
     });
   }
   
+  // Check if a task is overdue
+  isOverdue(deadline: string): boolean {
+    return new Date(deadline) < new Date();
+  }
+  
+  // Get CSS class for task status
+  getStatusClass(status: string): string {
+    switch (status) {
+      case 'Pendente': return 'badge bg-warning';
+      case 'Em Progresso': return 'badge bg-primary';
+      case 'Concluída': return 'badge bg-success';
+      case 'Bloqueada': return 'badge bg-danger';
+      default: return 'badge bg-secondary';
+    }
+  }
+  
   logout() {
     if (isPlatformBrowser(this.platformId)) {
-      this.authService.logout();  // No need to subscribe
+      this.authService.logout();
     }
   }
 }

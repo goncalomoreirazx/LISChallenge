@@ -119,7 +119,7 @@ export class SidebarComponent implements OnInit {
   
   logout() {
     if (isPlatformBrowser(this.platformId)) {
-      this.authService.logout().subscribe();  // Subscribe to the observable
+      this.authService.logout();  // No need to subscribe
     }
   }
 }

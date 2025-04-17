@@ -11,7 +11,7 @@ import { TaskDetailComponent } from './components/dashboard/task-detail/task-det
 import { ProgrammerTasksComponent } from './pages/programmer-tasks/programmer-tasks.component';
 
 export const routes: Routes = [
-  { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+  { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: 'login', component: LoginComponent },
   { path: 'register', component: RegisterComponent },
   // Protected routes
