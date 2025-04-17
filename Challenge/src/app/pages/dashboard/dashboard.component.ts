@@ -96,6 +96,8 @@ export class DashboardComponent implements OnInit {
   }
   
   logout() {
-    this.authService.logout();
+    if (isPlatformBrowser(this.platformId)) {
+      this.authService.logout();  // No need to subscribe
+    }
   }
 }

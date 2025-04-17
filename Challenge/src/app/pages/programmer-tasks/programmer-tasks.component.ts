@@ -7,13 +7,14 @@ import { AuthService } from '../../services/auth-service.service';
 import { TaskService, Task } from '../../services/task.service';
 import { FormsModule } from '@angular/forms';
 import { TaskDetailComponent } from '../../components/dashboard/task-detail/task-detail.component';
+import { TaskStatisticsComponent } from "../../components/dashboard/task-statistics/task-statistics.component";
 
 @Component({
   selector: 'app-programmer-tasks',
   templateUrl: './programmer-tasks.component.html',
   styleUrls: ['./programmer-tasks.component.css'],
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, SidebarComponent, TaskDetailComponent]
+  imports: [CommonModule, RouterLink, FormsModule, SidebarComponent, TaskDetailComponent, TaskStatisticsComponent]
 })
 export class ProgrammerTasksComponent implements OnInit {
   // Track sidebar collapsed state
@@ -31,6 +32,12 @@ export class ProgrammerTasksComponent implements OnInit {
   // Filters
   statusFilter: string = 'all';
   searchQuery: string = '';
+
+  recentActivities = [
+    { message: 'Task "Implement login form" marked as completed', details: 'Project: User Authentication System', time: '2 hours ago' },
+    { message: 'New task assigned to you', details: 'Task: Optimize database queries', time: '1 day ago' },
+    { message: 'Status updated to "In Progress"', details: 'Task: Fix navigation bug', time: '3 days ago' }
+  ];
   
   constructor(
     public authService: AuthService,

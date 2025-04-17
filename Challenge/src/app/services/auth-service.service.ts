@@ -194,22 +194,16 @@ export class AuthService {
       );
   }
 
-  logout(): Observable<void> {
+  logout(): void {
     console.log('Logging out user, isBrowser:', this.isBrowser);
     
-    // Clear storage data regardless of result
+    // Clear storage data
     this.clearStorageData();
     
-    // Use NgZone to ensure navigation happens in Angular zone
-    return of(undefined).pipe(
-      tap(() => {
-        if (this.isBrowser) {
-          this.zone.run(() => {
-            this.router.navigate(['/login']);
-          });
-        }
-      })
-    );
+    // Force a hard refresh and redirect to login
+    if (this.isBrowser) {
+      window.location.href = '/login';
+    }
   }
 
   // Check if user is a project manager

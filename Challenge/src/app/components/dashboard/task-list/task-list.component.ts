@@ -146,7 +146,8 @@ export class TaskListComponent implements OnInit {
       deadline: new Date(this.newTask.deadline).toISOString(),
       projectId: this.projectId,
       assigneeId: this.newTask.assigneeId,
-      status: 'Pendente'
+      status: 'Pendente',
+      projectName: '' // Add this line - it will be filled by the server
     };
   
     this.taskService.createTask(taskToSubmit).subscribe({
