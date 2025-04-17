@@ -1,0 +1,196 @@
+<div class="card h-100">
+    <div class="card-header bg-transparent">
+      <div class="d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">Task Details</h5>
+        <button class="btn btn-sm btn-outline-secondary" (click)="close()">
+          <i class="bi bi-x-lg"></i>
+        </button>
+      </div>
+    </div>
+    
+    <!-- Loading indicator -->
+    <div class="card-body text-center" *ngIf="loading">
+      <div class="spinner-border text-primary" role="status">
+        <span class="visually-hidden">Loading task details...</span>
+      </div>
+      <p class="mt-2">Loading task details...</p>
+    </div>
+    
+    <!-- Error message -->
+    <div class="card-body" *ngIf="error && !loading">
+      <div class="alert alert-danger">
+        {{ error }}
+        <button class="btn btn-sm btn-outline-danger ms-2" (click)="loadTask()">Try Again</button>
+      </div>
+    </div>
+    
+    <!-- Task details (view mode) -->
+    <div class="card-body" *ngIf="!loading && !error && task && !isEditing">
+      <div class="d-flex justify-content-between align-items-start mb-3">
+        <h2 class="mb-0">{{ task.name }}</h2>
+        
+        <div class="btn-group" *ngIf="authService.isProjectManager()">
+          <button class="btn btn-sm btn-primary" (click)="toggleEditMode()">
+            <i class="bi bi-pencil me-1"></i> Edit
+          </button>
+          <button class="btn btn-sm btn-danger" (click)="deleteTask()">
+            <i class="bi bi-trash me-1"></i> Delete
+          </button>
+        </div>
+      </div>
+      
+      <div class="mb-3">
+        <span [ngClass]="getStatusClass(task.status)" class="mb-2 d-inline-block">{{ task.status }}</span>
+        
+        <!-- Status actions for Project Managers -->
+        <div class="btn-group ms-2" *ngIf="authService.isProjectManager()">
+          <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            Change Status
+          </button>
+          <ul class="dropdown-menu">
+            <li><a class="dropdown-item" (click)="updateTaskStatus('Pendente')">Pendente</a></li>
+            <li><a class="dropdown-item" (click)="updateTaskStatus('Em Progresso')">Em Progresso</a></li>
+            <li><a class="dropdown-item" (click)="updateTaskStatus('Bloqueada')">Bloqueada</a></li>
+            <li><a class="dropdown-item" (click)="updateTaskStatus('Concluída')">Concluída</a></li>
+          </ul>
+        </div>
+        
+        <!-- Complete button for Programmers assigned to this task -->
+        <button 
+          *ngIf="authService.isProgrammer() && task.assigneeId === authService.currentUserValue?.id && task.status !== 'Concluída'"
+          class="btn btn-sm btn-success ms-2" 
+          (click)="updateTaskStatus('Concluída')">
+          <i class="bi bi-check-circle me-1"></i> Mark as Complete
+        </button>
+      </div>
+      
+      <div class="row mb-4">
+        <div class="col-md-6">
+          <div class="mb-2">
+            <strong>Assigned To:</strong>
+            <span class="ms-2">{{ task.assigneeName }}</span>
+          </div>
+          
+          <div class="mb-2">
+            <strong>Created:</strong>
+            <span class="ms-2">{{ formatDate(task.createdAt) }}</span>
+          </div>
+          
+          <div class="mb-2">
+            <strong>Deadline:</strong>
+            <span class="ms-2" [ngClass]="{'text-danger fw-bold': isOverdue(task.deadline) && task.status !== 'Concluída'}">
+              {{ formatDate(task.deadline) }}
+              <small *ngIf="isOverdue(task.deadline) && task.status !== 'Concluída'" class="text-danger ms-2">Overdue</small>
+            </span>
+          </div>
+          
+          <div class="mb-2" *ngIf="task.completedAt">
+            <strong>Completed:</strong>
+            <span class="ms-2">{{ formatDate(task.completedAt) }}</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="card mb-4">
+        <div class="card-header">
+          <h6 class="mb-0">Description</h6>
+        </div>
+        <div class="card-body">
+          <p *ngIf="task.description">{{ task.description }}</p>
+          <p *ngIf="!task.description" class="text-muted">No description provided</p>
+        </div>
+      </div>
+    </div>
+    
+    <!-- Task edit form -->
+    <div class="card-body" *ngIf="!loading && !error && task && isEditing">
+      <h3 class="mb-4">Edit Task</h3>
+      
+      <form (ngSubmit)="submitEditedTask()">
+        <div class="mb-3">
+          <label for="taskName" class="form-label">Task Name <span class="text-danger">*</span></label>
+          <input 
+            type="text" 
+            class="form-control" 
+            id="taskName" 
+            name="taskName"
+            [(ngModel)]="editedTask.name"
+            required
+            minlength="2"
+            maxlength="200"
+            placeholder="Enter task name">
+        </div>
+        
+        <div class="mb-3">
+          <label for="taskDescription" class="form-label">Description</label>
+          <textarea 
+            class="form-control" 
+            id="taskDescription" 
+            name="taskDescription"
+            [(ngModel)]="editedTask.description"
+            maxlength="4000"
+            rows="3"
+            placeholder="Enter task description"></textarea>
+          <small class="form-text text-muted">{{(editedTask.description || '').length}}/4000 characters</small>
+        </div>
+        
+        <div class="row mb-3">
+          <div class="col-md-6">
+            <label for="taskDeadline" class="form-label">Deadline <span class="text-danger">*</span></label>
+            <input 
+              type="date" 
+              class="form-control" 
+              id="taskDeadline" 
+              name="taskDeadline"
+              [(ngModel)]="editedTask.deadline"
+              required>
+          </div>
+          
+          <div class="col-md-6">
+            <label for="taskAssignee" class="form-label">Assigned Programmer <span class="text-danger">*</span></label>
+            <select 
+              class="form-select" 
+              id="taskAssignee" 
+              name="taskAssignee"
+              [(ngModel)]="editedTask.assigneeId"
+              required>
+              <option [ngValue]="0" disabled>Select programmer</option>
+              <option *ngFor="let programmer of availableProgrammers" [ngValue]="programmer.id">
+                {{programmer.fullName}}
+              </option>
+            </select>
+          </div>
+        </div>
+        
+        <div class="mb-3">
+          <label for="taskStatus" class="form-label">Status</label>
+          <select 
+            class="form-select" 
+            id="taskStatus" 
+            name="taskStatus"
+            [(ngModel)]="editedTask.status">
+            <option value="Pendente">Pendente</option>
+            <option value="Em Progresso">Em Progresso</option>
+            <option value="Bloqueada">Bloqueada</option>
+            <option value="Concluída">Concluída</option>
+          </select>
+        </div>
+        
+        <!-- Error message display -->
+        <div *ngIf="formError" class="alert alert-danger mb-3">
+          {{ formError }}
+        </div>
+        
+        <div class="d-flex justify-content-end gap-2 mt-4">
+          <button type="button" class="btn btn-secondary" (click)="toggleEditMode()">Cancel</button>
+          <button 
+            type="submit" 
+            class="btn btn-primary" 
+            [disabled]="isSubmitting">
+            <span *ngIf="isSubmitting" class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+            Save Changes
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>

@@ -6,6 +6,7 @@ import { ProjectService, Project } from '../../../services/project.service';
 import { AuthService, User } from '../../../services/auth-service.service';
 import { UserService } from '../../../services/user.service';
 import { TaskListComponent } from '../../dashboard/task-list/task-list.component';
+import { TaskDetailComponent } from '../../dashboard/task-detail/task-detail.component';
 
 declare var bootstrap: any; // For Bootstrap modal
 
@@ -14,13 +15,16 @@ declare var bootstrap: any; // For Bootstrap modal
   templateUrl: './project-details.component.html',
   styleUrls: ['./project-details.component.css'],
   standalone: true,
-  imports: [CommonModule, FormsModule, TaskListComponent]
+  imports: [CommonModule, FormsModule, TaskListComponent, TaskDetailComponent]
 })
 export class ProjectDetailComponent implements OnInit {
   projectId!: number;
   project: Project | null = null;
   loading = true;
   error: string | null = null;
+  
+  // For task display/editing
+  selectedTaskId: number | null = null;
   
   // For editing project
   isEditing = false;
@@ -111,6 +115,23 @@ export class ProjectDetailComponent implements OnInit {
         this.loadingProgrammers = false;
       }
     });
+  }
+
+  // Handle task selection from task list
+  onTaskSelected(taskId: number): void {
+    this.selectedTaskId = taskId;
+  }
+
+  // Handle task update event from task detail
+  onTaskUpdated(): void {
+    // Reload task list when a task is updated or deleted
+    if (!this.selectedTaskId) {
+      // If task detail is closed (e.g. after deletion), refresh the task list
+      const taskListComponent = document.querySelector('app-task-list') as any;
+      if (taskListComponent && taskListComponent.loadTasks) {
+        taskListComponent.loadTasks();
+      }
+    }
   }
 
   // Check if user is a project manager

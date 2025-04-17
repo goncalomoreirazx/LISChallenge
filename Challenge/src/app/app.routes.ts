@@ -6,6 +6,7 @@ import { AuthGuard } from './guard/auth-guard.guard';
 import { ProjectsComponent } from './pages/projects/projects.component';
 import { ProjectListComponent } from './components/dashboard/project-list/project-list.component';
 import { ProjectDetailComponent } from './components/dashboard/project-details/project-details.component';
+import { TaskDetailComponent } from './components/dashboard/task-detail/task-detail.component';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'dashboard', pathMatch: 'full' },

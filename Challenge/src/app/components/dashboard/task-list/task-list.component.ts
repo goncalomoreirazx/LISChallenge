@@ -1,9 +1,10 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { TaskService, Task } from '../../../services/task.service';
 import { UserService } from '../../../services/user.service';
 import { AuthService, User } from '../../../services/auth-service.service';
+import { ProjectService } from '../../../services/project.service';
 
 @Component({
   selector: 'app-task-list',
@@ -14,6 +15,7 @@ import { AuthService, User } from '../../../services/auth-service.service';
 })
 export class TaskListComponent implements OnInit {
   @Input() projectId!: number;
+  @Output() taskSelected = new EventEmitter<number>();
   
   tasks: Task[] = [];
   availableProgrammers: User[] = [];
@@ -35,13 +37,14 @@ export class TaskListComponent implements OnInit {
   constructor(
     private taskService: TaskService,
     private userService: UserService,
-    public authService: AuthService
+    public authService: AuthService,
+    private projectService: ProjectService // Added ProjectService
   ) {}
 
   ngOnInit(): void {
     this.loadTasks();
     if (this.authService.isProjectManager()) {
-      this.loadProgrammers();
+      this.loadProjectProgrammers(); // Load project programmers instead of all programmers
     }
   }
 
@@ -62,13 +65,21 @@ export class TaskListComponent implements OnInit {
     });
   }
 
-  loadProgrammers(): void {
-    this.userService.getProgrammers().subscribe({
+  // Load only programmers allocated to this project
+  loadProjectProgrammers(): void {
+    this.projectService.getProjectProgrammers(this.projectId).subscribe({
       next: (programmers) => {
         this.availableProgrammers = programmers;
+        console.log('Loaded project programmers:', programmers);
+        
+        // If no programmers available, show a hint
+        if (this.availableProgrammers.length === 0) {
+          this.formError = 'No programmers allocated to this project. Please allocate programmers first.';
+        }
       },
       error: (err) => {
-        console.error('Error loading programmers', err);
+        console.error('Error loading project programmers', err);
+        this.formError = 'Error loading available programmers. Please try again.';
       }
     });
   }
@@ -79,6 +90,13 @@ export class TaskListComponent implements OnInit {
     if (!this.showNewTaskForm) {
       // Reset form when hiding
       this.resetForm();
+    } else {
+      // Check if there are programmers available
+      if (this.availableProgrammers.length === 0) {
+        this.formError = 'No programmers allocated to this project. Please allocate programmers first.';
+      } else {
+        this.formError = null;
+      }
     }
   }
 
@@ -108,6 +126,13 @@ export class TaskListComponent implements OnInit {
     
     if (this.newTask.assigneeId === 0) {
       this.formError = 'You must select a programmer';
+      return;
+    }
+    
+    // Check if the programmer is allocated to this project
+    const isProgrammerAllocated = this.availableProgrammers.some(p => p.id === this.newTask.assigneeId);
+    if (!isProgrammerAllocated) {
+      this.formError = 'Selected programmer is not allocated to this project';
       return;
     }
   
@@ -184,6 +209,11 @@ export class TaskListComponent implements OnInit {
         console.error('Error updating task status', err);
       }
     });
+  }
+
+  // View task details
+  viewTaskDetails(taskId: number): void {
+    this.taskSelected.emit(taskId);
   }
 
   // Helper functions

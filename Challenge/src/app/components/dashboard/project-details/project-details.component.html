@@ -98,13 +98,29 @@
         </div>
       </div>
       
-      <!-- Tasks section  -->
+      <!-- Tasks section - conditionally showing task list or task detail -->
       <div class="card">
         <div class="card-header">
           <h5 class="mb-0">Tasks</h5>
         </div>
         <div class="card-body p-0">
-          <app-task-list [projectId]="projectId"></app-task-list>
+          <!-- Show task detail when a task is selected -->
+          <div *ngIf="selectedTaskId">
+            <app-task-detail 
+              [taskId]="selectedTaskId" 
+              [projectId]="projectId"
+              (closeDetail)="selectedTaskId = null"
+              (taskUpdated)="onTaskUpdated()">
+            </app-task-detail>
+          </div>
+          
+          <!-- Show task list when no task is selected -->
+          <div *ngIf="!selectedTaskId">
+            <app-task-list 
+              [projectId]="projectId"
+              (taskSelected)="onTaskSelected($event)">
+            </app-task-list>
+          </div>
         </div>
       </div>
     
