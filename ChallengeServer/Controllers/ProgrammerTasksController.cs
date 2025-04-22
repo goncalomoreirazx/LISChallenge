@@ -26,7 +26,7 @@ namespace ChallengeServer.Controllers
 
         // GET: api/tasks/my-tasks
         [HttpGet("my-tasks")]
-        [Authorize(Policy = "Programmer")]
+        [Authorize]
         public async Task<ActionResult<IEnumerable<TaskDto>>> GetMyTasks([FromQuery] string? status = null)
         {
             try
@@ -51,7 +51,7 @@ namespace ChallengeServer.Controllers
                 }
 
                 var tasks = await query.ToListAsync();
-
+                
                 // Map to DTOs
                 var taskDtos = tasks.Select(t => new TaskDto
                 {

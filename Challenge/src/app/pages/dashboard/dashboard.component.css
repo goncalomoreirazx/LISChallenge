@@ -1,76 +1,188 @@
+/* Enhanced responsive dashboard styles */
+
+/* Main container setup */
 .dashboard-container {
   display: flex;
-  height: 100vh;
+  min-height: 100vh;
   width: 100%;
+  position: relative;
+  overflow-x: hidden;
 }
 
+/* Content area with improved responsiveness */
 .content-area {
   flex: 1;
   margin-left: 250px; /* Match sidebar width */
-  transition: all 0.3s;
+  transition: all 0.3s ease;
   min-height: 100vh;
   background-color: #f8f9fa;
   overflow-y: auto;
-  width: calc(100% - 250px); /* Take remaining width */
+  width: calc(100% - 250px);
+  padding: 1rem;
 }
 
-/* Adjust for collapsed sidebar */
+/* Collapsed sidebar adjustments with smoother transition */
 .sidebar-collapsed .content-area {
-  margin-left: 70px; /* Match collapsed sidebar width */
+  margin-left: 70px;
   width: calc(100% - 70px);
 }
 
-.navbar {
-  border-radius: 0;
-}
-
+/* Card improvements */
 .card {
   border: none;
-  border-radius: 10px;
-  box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
-  transition: transform 0.3s;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  transition: all 0.3s ease;
+  margin-bottom: 1.5rem;
+  overflow: hidden;
 }
 
 .card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+/* Card header improvements */
+.card-header {
+  background-color: rgba(0, 0, 0, 0.02);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  padding: 1rem 1.25rem;
 }
 
 /* Status badges */
 .badge {
   font-weight: 500;
-  padding: 6px 10px;
+  padding: 0.5rem 0.75rem;
   min-width: 80px;
   text-align: center;
+  border-radius: 6px;
 }
 
-/* Animation for hover effects */
-.hover-lift {
-  transition: transform 0.3s;
+/* Navbar improvements */
+.navbar {
+  background-color: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  padding: 0.75rem 1rem;
 }
 
-.hover-lift:hover {
+/* Dashboard stats cards */
+.stats-card {
+  transition: all 0.3s ease;
+  border-radius: 12px;
+  background: white;
+  height: 100%;
+}
+
+.stats-card:hover {
   transform: translateY(-5px);
+  box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
-/* Responsive adjustments */
-@media (max-width: 767.98px) {
-  .content-area {
-    margin-left: 0 !important;
-    width: 100%;
-  }
-  
-  .card:hover {
-    transform: none;
-  }
+.stats-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  margin-right: 1rem;
 }
 
-/* Special styling for overdue tasks */
-.text-danger.fw-bold {
-  animation: pulse 2s infinite;
-}
-
+/* Enhanced animations */
 @keyframes pulse {
   0% { opacity: 1; }
   50% { opacity: 0.7; }
   100% { opacity: 1; }
+}
+
+.text-danger.fw-bold {
+  animation: pulse 2s infinite;
+}
+
+/* Medium screens adjustments */
+@media (max-width: 992px) {
+  .content-area {
+    padding: 0.75rem;
+  }
+  
+  .card {
+    margin-bottom: 1rem;
+  }
+  
+  .stats-icon {
+    width: 50px;
+    height: 50px;
+  }
+}
+
+/* Mobile adjustments */
+@media (max-width: 767.98px) {
+  .content-area {
+    margin-left: 0 !important;
+    width: 100% !important;
+    padding: 0.5rem;
+  }
+  
+  .sidebar-collapsed .content-area {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  .card:hover {
+    transform: none; /* Disable hover effects on mobile */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .stats-card:hover {
+    transform: none;
+  }
+  
+  /* Adjust font sizes for mobile */
+  h1, .h1 { font-size: 1.75rem; }
+  h2, .h2 { font-size: 1.5rem; }
+  h3, .h3 { font-size: 1.25rem; }
+  
+  /* Make badges more compact on mobile */
+  .badge {
+    padding: 0.35rem 0.5rem;
+    min-width: 60px;
+    font-size: 0.75rem;
+  }
+  
+  /* Adjust card padding for mobile */
+  .card-body {
+    padding: 1rem;
+  }
+  
+  /* Make tables responsive on mobile */
+  .table-responsive {
+    border: 0;
+  }
+}
+
+/* Small mobile devices */
+@media (max-width: 575.98px) {
+  .container-fluid {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+  
+  /* Further reduce font sizes */
+  body {
+    font-size: 0.875rem;
+  }
+  
+  h1, .h1 { font-size: 1.5rem; }
+  h2, .h2 { font-size: 1.25rem; }
+  h3, .h3 { font-size: 1.125rem; }
+  
+  /* Stack flex items on very small screens */
+  .d-flex {
+    flex-wrap: wrap;
+  }
+  
+  /* Adjust spacing */
+  .mb-4 {
+    margin-bottom: 1rem !important;
+  }
 }

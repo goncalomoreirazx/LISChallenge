@@ -30,17 +30,17 @@ export class UpcomingDeadlinesComponent implements OnInit {
       next: (tasks) => {
         // Filter and sort tasks:
         // 1. Not completed
-        // 2. Due in the next 7 days
+        // 2. Due in the next 14 days (changed from 7 days)
         // 3. Sorted by deadline (ascending)
         const now = new Date();
-        const sevenDaysFromNow = new Date();
-        sevenDaysFromNow.setDate(now.getDate() + 7);
+        const fourteenDaysFromNow = new Date();
+        fourteenDaysFromNow.setDate(now.getDate() + 14);
 
         this.upcomingTasks = tasks
           .filter(task => 
             task.status !== 'Concluída' && 
             new Date(task.deadline) >= now &&
-            new Date(task.deadline) <= sevenDaysFromNow
+            new Date(task.deadline) <= fourteenDaysFromNow
           )
           .sort((a, b) => 
             new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
