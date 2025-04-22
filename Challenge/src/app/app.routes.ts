@@ -22,11 +22,6 @@ export const routes: Routes = [
   },
   // Dashboard section routes with protection
   { 
-    path: 'profile', 
-    component: DashboardComponent,
-    canActivate: [AuthGuard]
-  },
-  { 
     path: 'projectos', // Project Manager specific route
     component: ProjectsComponent,
     canActivate: [AuthGuard],

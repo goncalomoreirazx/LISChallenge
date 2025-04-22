@@ -59,7 +59,6 @@ export class SidebarComponent implements OnInit {
     // Create base menu with common items
     this.menuItems = [
       { icon: 'bi bi-speedometer2', label: 'Dashboard', link: '/dashboard' },
-      { icon: 'bi bi-person', label: 'Profile', link: '/profile' },
       { icon: 'bi bi-question-circle', label: 'Help', link: '/help' }
     ];
     

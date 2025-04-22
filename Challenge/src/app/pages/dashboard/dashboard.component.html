@@ -12,7 +12,6 @@
           <!-- User dropdown -->
           <div class="dropdown">
             <button class="btn d-flex align-items-center" type="button" data-bs-toggle="dropdown">
-              <img src="https://via.placeholder.com/40" class="rounded-circle me-2" alt="User">
               <span *ngIf="authService.currentUserValue">{{ authService.currentUserValue.fullName }}</span>
               <span *ngIf="!authService.currentUserValue">User</span>
               <i class="bi bi-chevron-down ms-2"></i>

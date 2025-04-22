@@ -3,8 +3,8 @@
 <div class="sidebar" [class.collapsed]="isCollapsed">
   <div class="sidebar-header">
     <div class="app-icon">
-      <span *ngIf="!isCollapsed">Dashboard</span>
-      <span *ngIf="isCollapsed">DB</span>
+      <span *ngIf="!isCollapsed">LIS Challenge</span>
+      <span *ngIf="isCollapsed">LC</span>
     </div>
     <button class="toggle-btn" (click)="toggleSidebar()">
       <i class="bi" [ngClass]="isCollapsed ? 'bi-chevron-right' : 'bi-chevron-left'"></i>
