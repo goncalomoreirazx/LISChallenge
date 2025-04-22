@@ -187,8 +187,23 @@ submitEditedTask(): void {
     }
   }
   
-  // Update task status
   updateTaskStatus(status: string): void {
+    // Check user permissions
+    const currentUser = this.authService.currentUserValue;
+    
+    // Programmers can only update their own tasks' status
+    if (this.authService.isProgrammer() && 
+        this.task && this.task.assigneeId !== currentUser?.id) {
+      alert('You can only update tasks assigned to you.');
+      return;
+    }
+    
+    // Programmers can't set tasks to "Bloqueada" (Blocked)
+    if (this.authService.isProgrammer() && status === 'Bloqueada') {
+      alert('Programmers cannot set tasks to Blocked status. Please contact a Project Manager.');
+      return;
+    }
+    
     this.taskService.updateTaskStatus(this.taskId, status).subscribe({
       next: () => {
         // Update local task status
@@ -210,6 +225,7 @@ submitEditedTask(): void {
       }
     });
   }
+
 
   // Handle time logged from time tracking component
   onTimeLogged(entry: TimeEntry): void {

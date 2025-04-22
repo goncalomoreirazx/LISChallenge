@@ -43,10 +43,10 @@ export const routes: Routes = [
     ]
   },
   { 
-    path: 'tarefas', // Programmer specific route
+    path: 'tarefas', // Both Programmer and Project Manager can access
     component: ProgrammerTasksComponent,
     canActivate: [AuthGuard],
-    data: { requiredUserType: 2 } // 2 = Programmer
+    // Remove data requirement to allow both user types to access
   },
   { 
     path: 'settings', 

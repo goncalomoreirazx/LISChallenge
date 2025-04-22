@@ -39,12 +39,22 @@ export class ProgrammerTasksComponent implements OnInit {
     { message: 'Status updated to "In Progress"', details: 'Task: Fix navigation bug', time: '3 days ago' }
   ];
   
+  // Page title based on user role
+  pageTitle: string = 'My Tasks';
+  
   constructor(
     public authService: AuthService,
     private taskService: TaskService
   ) {}
   
   ngOnInit() {
+    // Set page title based on user role
+    if (this.authService.isProjectManager()) {
+      this.pageTitle = 'Tasks Overview';
+    } else {
+      this.pageTitle = 'My Tasks';
+    }
+    
     this.loadTasks();
   }
   
@@ -109,6 +119,13 @@ export class ProgrammerTasksComponent implements OnInit {
   
   closeTaskDetail() {
     this.selectedTaskId = null;
+  }
+  
+  // Check if user can mark task as complete (only programmers and their own tasks)
+  canMarkAsComplete(task: Task): boolean {
+    return this.authService.isProgrammer() && 
+           task.assigneeId === this.authService.currentUserValue?.id &&
+           task.status !== 'Concluída';
   }
   
   markTaskAsComplete(taskId: number) {

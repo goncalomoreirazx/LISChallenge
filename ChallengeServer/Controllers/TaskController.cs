@@ -277,100 +277,78 @@ namespace ChallengeServer.Controllers
 
         // PATCH: api/tasks/{id}/status
         [HttpPatch("{id}/status")]
-    [Authorize]
-    public async Task<IActionResult> UpdateTaskStatus(int id, UpdateTaskStatusDto statusDto)
-    {
-        try
+        public async Task<IActionResult> UpdateTaskStatus(int id, UpdateTaskStatusDto statusDto)
         {
-            // Get current user ID from claims
-            var userId = User.FindFirstValue("Id");
-            if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
+            try
             {
-                return Unauthorized(new { message = "User not authenticated properly" });
-            }
-
-            // Get user type from claims
-            var userType = User.FindFirstValue("UserType");
-            if (string.IsNullOrEmpty(userType) || !int.TryParse(userType, out int userTypeId))
-            {
-                return Unauthorized(new { message = "User type not determined" });
-            }
-
-            // Get the task
-            var task = await _context.Tasks
-                .Include(t => t.Project)
-                .FirstOrDefaultAsync(t => t.Id == id);
-
-            if (task == null)
-            {
-                return NotFound(new { message = "Task not found" });
-            }
-
-            // Check permissions based on user type
-            if (userTypeId == 1) // Project Manager
-            {
-                // Project Manager can only update tasks for projects they manage
-                if (task.Project.ManagerId != currentUserId)
+                // Get current user ID from claims
+                var userId = User.FindFirstValue("Id");
+                if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
                 {
-                    return Forbid();
+                    return Unauthorized(new { message = "User not authenticated properly" });
                 }
-                
-                // Project Managers can set any status
-                if (!new[] { "Pendente", "Em Progresso", "Bloqueada", "Concluída" }.Contains(statusDto.Status))
+
+                // Get user type from claims
+                var userType = User.FindFirstValue("UserType");
+                if (string.IsNullOrEmpty(userType) || !int.TryParse(userType, out int userTypeId))
                 {
-                    return BadRequest(new { message = "Invalid status value. Allowed values: Pendente, Em Progresso, Bloqueada, Concluída" });
+                    return Unauthorized(new { message = "User type not determined" });
                 }
-            }
-            else if (userTypeId == 2) // Programmer
-            {
-                // Programmer can only update tasks assigned to them
+
+                // Only allow Programmers to update task status
+                if (userTypeId != 2) // 2 = Programmer
+                {
+                    return BadRequest(new { message = "Only Programmers can update task status" });
+                }
+
+                // Get the task
+                var task = await _context.Tasks
+                    .Include(t => t.Project)
+                    .FirstOrDefaultAsync(t => t.Id == id);
+
+                if (task == null)
+                {
+                    return NotFound(new { message = "Task not found" });
+                }
+
+                // Programmer (type 2) can only update status for tasks assigned to them
                 if (task.AssigneeId != currentUserId)
                 {
                     return Forbid();
                 }
-                
-                // Programmers can't set status to "Bloqueada"
-                if (statusDto.Status == "Bloqueada")
+
+                // Programmers can only mark tasks as completed
+                if (statusDto.Status != "Concluída")
                 {
-                    return BadRequest(new { message = "Programmers cannot set tasks to 'Bloqueada' status. Please contact a Project Manager." });
+                    return BadRequest(new { message = "Programmers can only mark tasks as completed" });
                 }
-                
-                // Validate allowed values for programmers
-                if (!new[] { "Pendente", "Em Progresso", "Concluída" }.Contains(statusDto.Status))
+
+                // Update the task status
+                task.Status = statusDto.Status;
+
+                // If status is changed to "Concluída" (Completed), set the completion date
+                if (statusDto.Status == "Concluída")
                 {
-                    return BadRequest(new { message = "Invalid status value. Allowed values for programmers: Pendente, Em Progresso, Concluída" });
+                    task.CompletedAt = DateTime.UtcNow;
                 }
+                else
+                {
+                    // If status is changed from "Concluída" to something else, clear the completion date
+                    task.CompletedAt = null;
+                }
+
+                _context.Entry(task).State = EntityState.Modified;
+                await _context.SaveChangesAsync();
+
+                return NoContent();
             }
-            else
+            catch (Exception ex)
             {
-                return Forbid();
+                _logger.LogError(ex, "Error updating status for task with ID {TaskId}", id);
+                return StatusCode(500, new { message = "Internal server error" });
             }
-
-            // Update the task status
-            task.Status = statusDto.Status;
-
-            // If status is changed to "Concluída", set the completion date
-            if (statusDto.Status == "Concluída")
-            {
-                task.CompletedAt = DateTime.UtcNow;
-            }
-            else
-            {
-                // If status is changed from "Concluída" to something else, clear the completion date
-                task.CompletedAt = null;
-            }
-
-            _context.Entry(task).State = EntityState.Modified;
-            await _context.SaveChangesAsync();
-
-            return NoContent();
         }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error updating status for task with ID {TaskId}", id);
-            return StatusCode(500, new { message = "Internal server error" });
-        }
-    }
+
         // DELETE: api/tasks/{id}
         [HttpDelete("{id}")]
         [Authorize(Policy = "ProjectManager")]

@@ -38,11 +38,30 @@ namespace ChallengeServer.Controllers
                     return Unauthorized(new { message = "User not authenticated properly" });
                 }
 
-                // Get all tasks assigned to the current programmer
-                var query = _context.Tasks
-                    .Include(t => t.Project)
-                    .Include(t => t.Assignee)
-                    .Where(t => t.AssigneeId == currentUserId);
+                // Get user type from claims
+                var userType = User.FindFirstValue("UserType");
+                if (string.IsNullOrEmpty(userType) || !int.TryParse(userType, out int userTypeId))
+                {
+                    return Unauthorized(new { message = "User type not determined" });
+                }
+
+                // Create base query depending on user type
+                IQueryable<Models.ProjectTask> query;
+
+                if (userTypeId == 1) // Project Manager: get all tasks for projects they manage
+                {
+                    query = _context.Tasks
+                        .Include(t => t.Project)
+                        .Include(t => t.Assignee)
+                        .Where(t => t.Project.ManagerId == currentUserId);
+                }
+                else // Programmer: get only their assigned tasks
+                {
+                    query = _context.Tasks
+                        .Include(t => t.Project)
+                        .Include(t => t.Assignee)
+                        .Where(t => t.AssigneeId == currentUserId);
+                }
 
                 // Filter by status if provided
                 if (!string.IsNullOrEmpty(status))
@@ -72,14 +91,14 @@ namespace ChallengeServer.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving programmer tasks");
+                _logger.LogError(ex, "Error retrieving tasks");
                 return StatusCode(500, new { message = "Internal server error" });
             }
         }
 
         // GET: api/tasks/my-tasks/stats
         [HttpGet("my-tasks/stats")]
-        [Authorize(Policy = "Programmer")]
+        [Authorize]
         public async Task<ActionResult<object>> GetMyTasksStats()
         {
             try
@@ -89,6 +108,19 @@ namespace ChallengeServer.Controllers
                 if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
                 {
                     return Unauthorized(new { message = "User not authenticated properly" });
+                }
+                
+                // Get user type from claims
+                var userType = User.FindFirstValue("UserType");
+                if (string.IsNullOrEmpty(userType) || !int.TryParse(userType, out int userTypeId))
+                {
+                    return Unauthorized(new { message = "User type not determined" });
+                }
+                
+                // Only allow programmers to view statistics
+                if (userTypeId != 2) // Not a programmer
+                {
+                    return Forbid();
                 }
 
                 // Get tasks assigned to the current programmer
@@ -131,4 +163,4 @@ namespace ChallengeServer.Controllers
         // PATCH: api/tasks/{id}/status
         // This endpoint already exists in TasksController, but ensure programmers can only set status to "Concluída"
     }
-}
+    }

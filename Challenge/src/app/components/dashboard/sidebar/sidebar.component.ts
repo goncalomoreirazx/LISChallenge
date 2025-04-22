@@ -66,15 +66,14 @@ export class SidebarComponent implements OnInit {
     // Only add Projects for Project Managers (type 1)
     if (user && user.userType === 1) {
       this.menuItems.push(
-        { icon: 'bi bi-bar-chart', label: 'Projectos', link: '/projectos' },
-        { icon: 'bi bi-gear', label: 'Tarefas', link: '/tarefas' }
+        { icon: 'bi bi-bar-chart', label: 'Projectos', link: '/projectos' }
       );
     }
     
-    // Only add Tasks for Programmers (type 2)
-    if (user && user.userType === 2) {
+    // Add Tasks for both Programmers and Project Managers
+    if (user && (user.userType === 1 || user.userType === 2)) {
       this.menuItems.push(
-        { icon: 'bi bi-gear', label: 'Tarefas', link: '/tarefas' }
+        { icon: 'bi bi-list-check', label: 'Tarefas', link: '/tarefas' }
       );
     }
     

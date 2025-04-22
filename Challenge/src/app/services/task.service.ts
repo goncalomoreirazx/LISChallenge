@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../environment/environment';
+import { AuthService } from './auth-service.service';
 
 export interface Task {
   id: number;
@@ -25,7 +26,10 @@ export interface Task {
 export class TaskService {
   private apiUrl = `${environment.apiUrl}/tasks`;
 
-  constructor(private http: HttpClient) { }
+  constructor(
+    private http: HttpClient,
+    private authService: AuthService
+  ) { }
 
   // Get tasks for a specific project
   getProjectTasks(projectId: number): Observable<Task[]> {
@@ -38,20 +42,24 @@ export class TaskService {
   }
 
   // Get all tasks assigned to the current programmer
+  // For Project Managers, this returns all tasks for their projects
   getProgrammerTasks(): Observable<Task[]> {
     return this.http.get<Task[]>(`${this.apiUrl}/my-tasks`).pipe(
+      tap(tasks => {
+        console.log(`Retrieved ${tasks.length} tasks. User type: ${this.authService.currentUserValue?.userType}`);
+      }),
       catchError(error => {
-        console.error('Error fetching programmer tasks:', error);
+        console.error('Error fetching tasks:', error);
         return throwError(() => error);
       })
     );
   }
 
-  // Get tasks by status for the current programmer
+  // Get tasks by status for the current user
   getProgrammerTasksByStatus(status: string): Observable<Task[]> {
     return this.http.get<Task[]>(`${this.apiUrl}/my-tasks?status=${status}`).pipe(
       catchError(error => {
-        console.error(`Error fetching programmer tasks with status ${status}:`, error);
+        console.error(`Error fetching tasks with status ${status}:`, error);
         return throwError(() => error);
       })
     );
