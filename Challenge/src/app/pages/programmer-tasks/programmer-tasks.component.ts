@@ -33,12 +33,6 @@ export class ProgrammerTasksComponent implements OnInit {
   statusFilter: string = 'all';
   searchQuery: string = '';
 
-  recentActivities = [
-    { message: 'Task "Implement login form" marked as completed', details: 'Project: User Authentication System', time: '2 hours ago' },
-    { message: 'New task assigned to you', details: 'Task: Optimize database queries', time: '1 day ago' },
-    { message: 'Status updated to "In Progress"', details: 'Task: Fix navigation bug', time: '3 days ago' }
-  ];
-  
   // Page title based on user role
   pageTitle: string = 'My Tasks';
   
