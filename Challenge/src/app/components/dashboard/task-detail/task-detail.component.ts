@@ -187,20 +187,33 @@ submitEditedTask(): void {
     }
   }
   
+ // Update task status
   updateTaskStatus(status: string): void {
     // Check user permissions
     const currentUser = this.authService.currentUserValue;
     
-    // Programmers can only update their own tasks' status
+    if (!currentUser) {
+      alert('User not authenticated.');
+      return;
+    }
+    
+    // Project Managers can only set tasks to "Bloqueada" or "Pendente"
+    if (this.authService.isProjectManager() && 
+        status !== 'Bloqueada' && status !== 'Pendente') {
+      alert('Project Managers can only set tasks to Blocked or Pending status.');
+      return;
+    }
+    
+    // Programmers can only update their own tasks
     if (this.authService.isProgrammer() && 
-        this.task && this.task.assigneeId !== currentUser?.id) {
+        this.task && this.task.assigneeId !== currentUser.id) {
       alert('You can only update tasks assigned to you.');
       return;
     }
     
-    // Programmers can't set tasks to "Bloqueada" (Blocked)
+    // Programmers cannot set tasks to "Bloqueada"
     if (this.authService.isProgrammer() && status === 'Bloqueada') {
-      alert('Programmers cannot set tasks to Blocked status. Please contact a Project Manager.');
+      alert('Programmers cannot set tasks to Blocked status.');
       return;
     }
     
@@ -220,7 +233,7 @@ submitEditedTask(): void {
         this.taskUpdated.emit();
       },
       error: (err) => {
-        alert('Failed to update task status. Please try again.');
+        alert('Failed to update task status: ' + (err.error?.message || 'Unknown error'));
         console.error('Error updating task status', err);
       }
     });

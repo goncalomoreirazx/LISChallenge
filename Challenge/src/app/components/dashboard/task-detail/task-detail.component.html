@@ -50,24 +50,20 @@
         <ul class="dropdown-menu">
           <li><a class="dropdown-item" (click)="updateTaskStatus('Pendente')">Pendente</a></li>
           <li><a class="dropdown-item" (click)="updateTaskStatus('Em Progresso')">Em Progresso</a></li>
-          <!-- "Bloqueada" option is removed for programmers -->
           <li><a class="dropdown-item" (click)="updateTaskStatus('Concluída')">Concluída</a></li>
         </ul>
       </div>
-      
-      <!-- Project Manager dropdown with all options (including Bloqueada) -->
+
+      <!-- Project Manager dropdown - shows Bloqueada and Pendente options -->
       <div class="btn-group ms-2" *ngIf="authService.isProjectManager()">
         <button class="btn btn-sm btn-outline-primary dropdown-toggle" type="button" data-bs-toggle="dropdown">
           Change Status
         </button>
         <ul class="dropdown-menu">
-          <li><a class="dropdown-item" (click)="updateTaskStatus('Pendente')">Pendente</a></li>
-          <li><a class="dropdown-item" (click)="updateTaskStatus('Em Progresso')">Em Progresso</a></li>
           <li><a class="dropdown-item" (click)="updateTaskStatus('Bloqueada')">Bloqueada</a></li>
-          <li><a class="dropdown-item" (click)="updateTaskStatus('Concluída')">Concluída</a></li>
+          <li><a class="dropdown-item" (click)="updateTaskStatus('Pendente')">Pendente</a></li>
         </ul>
       </div>
-    </div>
     
     <div class="row mb-4">
       <div class="col-md-6">

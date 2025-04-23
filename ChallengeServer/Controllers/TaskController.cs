@@ -295,12 +295,6 @@ namespace ChallengeServer.Controllers
                     return Unauthorized(new { message = "User type not determined" });
                 }
 
-                // Only allow Programmers to update task status
-                if (userTypeId != 2) // 2 = Programmer
-                {
-                    return BadRequest(new { message = "Only Programmers can update task status" });
-                }
-
                 // Get the task
                 var task = await _context.Tasks
                     .Include(t => t.Project)
@@ -311,27 +305,55 @@ namespace ChallengeServer.Controllers
                     return NotFound(new { message = "Task not found" });
                 }
 
-                // Programmer (type 2) can only update status for tasks assigned to them
-                if (task.AssigneeId != currentUserId)
+                // Apply business rules for status updates
+                if (userTypeId == 1) // Project Manager
                 {
-                    return Forbid();
+                    // Project Managers can only change status to "Bloqueada" or "Pendente"
+                    if (statusDto.Status != "Bloqueada" && statusDto.Status != "Pendente")
+                    {
+                        return BadRequest(new { message = "Project Managers can only set tasks to Blocked or Pending status" });
+                    }
+                    
+                    // Project Managers can only update tasks for projects they manage
+                    if (task.Project.ManagerId != currentUserId)
+                    {
+                        return Forbid();
+                    }
                 }
-
-                // Programmers can only mark tasks as completed
-                if (statusDto.Status != "Concluída")
+                else if (userTypeId == 2) // Programmer
                 {
-                    return BadRequest(new { message = "Programmers can only mark tasks as completed" });
+                    // Programmers can only update their own tasks
+                    if (task.AssigneeId != currentUserId)
+                    {
+                        return Forbid();
+                    }
+                    
+                    // Programmers cannot set status to "Bloqueada"
+                    if (statusDto.Status == "Bloqueada")
+                    {
+                        return BadRequest(new { message = "Programmers cannot set tasks to Blocked status" });
+                    }
+                    
+                    // Make sure the status is one of the allowed values
+                    if (statusDto.Status != "Pendente" && statusDto.Status != "Em Progresso" && statusDto.Status != "Concluída")
+                    {
+                        return BadRequest(new { message = "Invalid status. Must be one of: Pendente, Em Progresso, Concluída" });
+                    }
+                }
+                else
+                {
+                    return BadRequest(new { message = "Invalid user type" });
                 }
 
                 // Update the task status
                 task.Status = statusDto.Status;
 
-                // If status is changed to "Concluída" (Completed), set the completion date
+                // Set or clear completion date when status changes
                 if (statusDto.Status == "Concluída")
                 {
                     task.CompletedAt = DateTime.UtcNow;
                 }
-                else
+                else if (task.CompletedAt != null)
                 {
                     // If status is changed from "Concluída" to something else, clear the completion date
                     task.CompletedAt = null;
