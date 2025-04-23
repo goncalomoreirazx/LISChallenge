@@ -54,7 +54,9 @@ export class TaskDetailComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadTask();
-    if (this.authService.isProjectManager()) {
+    
+    // Only load programmers if we're a project manager AND have a valid project ID
+    if (this.authService.isProjectManager() && this.projectId && this.projectId > 0) {
       this.loadProjectProgrammers();
     }
   }
@@ -68,6 +70,16 @@ export class TaskDetailComponent implements OnInit {
         this.task = data;
         this.loading = false;
         
+        // If the task has a project ID but our input doesn't, update the project ID
+        if (this.task && (!this.projectId || this.projectId <= 0) && this.task.projectId > 0) {
+          this.projectId = this.task.projectId;
+          
+          // Now that we have a valid project ID, load programmers if needed
+          if (this.authService.isProjectManager()) {
+            this.loadProjectProgrammers();
+          }
+        }
+        
         // Initialize edit form with current values
         this.resetEditForm();
       },
@@ -80,6 +92,12 @@ export class TaskDetailComponent implements OnInit {
   }
   
   loadProjectProgrammers(): void {
+    // Only proceed if we have a valid project ID
+    if (!this.projectId || this.projectId <= 0) {
+      console.log('Skipping programmer loading - no valid project ID');
+      return;
+    }
+    
     this.projectService.getProjectProgrammers(this.projectId).subscribe({
       next: (programmers) => {
         this.availableProgrammers = programmers;
@@ -114,62 +132,63 @@ export class TaskDetailComponent implements OnInit {
   }
 
   // Submit edited task
-submitEditedTask(): void {
-  // Validate form
-  if (!this.editedTask.name) {
-    this.formError = 'Task name is required';
-    return;
-  }
-  
-  if (!this.editedTask.deadline) {
-    this.formError = 'Deadline is required';
-    return;
-  }
-  
-  if (this.editedTask.assigneeId === 0) {
-    this.formError = 'You must select a programmer';
-    return;
-  }
-
-  this.isSubmitting = true;
-  this.formError = null;
-  
-  // Create a clean object with only the fields to update
-  const taskToUpdate: any = {
-    name: this.editedTask.name.trim(),
-    description: this.editedTask.description,
-    deadline: new Date(this.editedTask.deadline).toISOString(),
-    assigneeId: this.editedTask.assigneeId
-  };
-  
-  // Only add status if user is a programmer
-  if (this.authService.isProgrammer()) {
-    taskToUpdate.status = this.editedTask.status;
-  }
-
-  this.taskService.updateTask(this.taskId, taskToUpdate).subscribe({
-    next: () => {
-      // Exit edit mode and reload task
-      this.isEditing = false;
-      this.isSubmitting = false;
-      this.loadTask();
-      
-      // Notify parent component that task was updated
-      this.taskUpdated.emit();
-    },
-    error: (err) => {
-      this.isSubmitting = false;
-      if (err.error && err.error.message) {
-        this.formError = err.error.message;
-      } else if (err.status === 400) {
-        this.formError = 'Invalid task data. Please check your inputs.';
-      } else {
-        this.formError = 'Failed to update task. Please try again.';
-      }
-      console.error('Error updating task', err);
+  submitEditedTask(): void {
+    // Validate form
+    if (!this.editedTask.name) {
+      this.formError = 'Task name is required';
+      return;
     }
-  });
-}
+    
+    if (!this.editedTask.deadline) {
+      this.formError = 'Deadline is required';
+      return;
+    }
+    
+    if (this.editedTask.assigneeId === 0) {
+      this.formError = 'You must select a programmer';
+      return;
+    }
+
+    this.isSubmitting = true;
+    this.formError = null;
+    
+    // Create a clean object with only the fields to update
+    const taskToUpdate: any = {
+      name: this.editedTask.name.trim(),
+      description: this.editedTask.description,
+      deadline: new Date(this.editedTask.deadline).toISOString(),
+      assigneeId: this.editedTask.assigneeId
+    };
+    
+    // Only add status if user is a programmer
+    if (this.authService.isProgrammer()) {
+      taskToUpdate.status = this.editedTask.status;
+    }
+
+    this.taskService.updateTask(this.taskId, taskToUpdate).subscribe({
+      next: () => {
+        // Exit edit mode and reload task
+        this.isEditing = false;
+        this.isSubmitting = false;
+        this.loadTask();
+        
+        // Notify parent component that task was updated
+        this.taskUpdated.emit();
+      },
+      error: (err) => {
+        this.isSubmitting = false;
+        if (err.error && err.error.message) {
+          this.formError = err.error.message;
+        } else if (err.status === 400) {
+          this.formError = 'Invalid task data. Please check your inputs.';
+        } else {
+          this.formError = 'Failed to update task. Please try again.';
+        }
+        console.error('Error updating task', err);
+      }
+    });
+  }
+
   // Delete the current task
   deleteTask(): void {
     if (confirm('Are you sure you want to delete this task? This cannot be undone.')) {
@@ -187,7 +206,7 @@ submitEditedTask(): void {
     }
   }
   
- // Update task status
+  // Update task status
   updateTaskStatus(status: string): void {
     // Check user permissions
     const currentUser = this.authService.currentUserValue;
@@ -238,7 +257,6 @@ submitEditedTask(): void {
       }
     });
   }
-
 
   // Handle time logged from time tracking component
   onTimeLogged(entry: TimeEntry): void {

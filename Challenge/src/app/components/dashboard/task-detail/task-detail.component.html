@@ -64,6 +64,7 @@
           <li><a class="dropdown-item" (click)="updateTaskStatus('Pendente')">Pendente</a></li>
         </ul>
       </div>
+    </div>
     
     <div class="row mb-4">
       <div class="col-md-6">
@@ -163,7 +164,7 @@
         </div>
       </div>
       
-      <div class="mb-3" *ngIf="isEditing">
+      <div class="mb-3">
         <label for="taskStatus" class="form-label">Status</label>
         <select 
           class="form-select" 
@@ -197,7 +198,7 @@
   </div>
 
   <!-- Time tracking section - visible only for programmers viewing their assigned tasks -->
-  <div *ngIf="!loading && !error && task && authService.isProgrammer() && authService.currentUserValue && task.assigneeId === authService.currentUserValue.id" class="mt-4">
+  <div class="card-body" *ngIf="!loading && !error && task && authService.isProgrammer() && authService.currentUserValue && task.assigneeId === authService.currentUserValue.id">
     <app-time-tracking 
       [task]="task"
       (timeLogged)="onTimeLogged($event)">
