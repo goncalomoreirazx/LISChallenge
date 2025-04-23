@@ -228,6 +228,7 @@ public async Task<ActionResult<Project>> CreateProject(CreateProjectDto projectD
                     return Unauthorized(new { message = "User not authenticated properly" });
                 }
 
+                // Get the project
                 var project = await _context.Projects.FindAsync(id);
                 
                 if (project == null)
@@ -239,7 +240,21 @@ public async Task<ActionResult<Project>> CreateProject(CreateProjectDto projectD
                 {
                     return Forbid();
                 }
+                
+                // Check for related records and delete them first
+                var relatedTasks = await _context.Tasks.Where(t => t.ProjectId == id).ToListAsync();
+                if (relatedTasks.Any())
+                {
+                    _context.Tasks.RemoveRange(relatedTasks);
+                }
+                
+                var relatedProgrammers = await _context.ProjectProgrammers.Where(pp => pp.ProjectId == id).ToListAsync();
+                if (relatedProgrammers.Any())
+                {
+                    _context.ProjectProgrammers.RemoveRange(relatedProgrammers);
+                }
 
+                // Now delete the project
                 _context.Projects.Remove(project);
                 await _context.SaveChangesAsync();
 
@@ -247,8 +262,12 @@ public async Task<ActionResult<Project>> CreateProject(CreateProjectDto projectD
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error deleting project with ID {ProjectId}", id);
-                return StatusCode(500, new { message = "Internal server error" });
+                _logger.LogError(ex, "Error deleting project with ID {ProjectId}. Error details: {ErrorMessage}", id, ex.Message);
+                if (ex.InnerException != null)
+                {
+                    _logger.LogError("Inner exception: {InnerErrorMessage}", ex.InnerException.Message);
+                }
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
 

@@ -160,7 +160,5 @@ namespace ChallengeServer.Controllers
             }
         }
 
-        // PATCH: api/tasks/{id}/status
-        // This endpoint already exists in TasksController, but ensure programmers can only set status to "Concluída"
     }
     }
