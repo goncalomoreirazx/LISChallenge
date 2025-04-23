@@ -6,6 +6,7 @@ import { TaskService, Task } from '../../../services/task.service';
 import { AuthService } from '../../../services/auth-service.service';
 import { ProjectService } from '../../../services/project.service';
 import { TimeTrackingComponent } from '../time-tracking/time-tracking.component';
+import { TimeTrackingService } from '../../../services/time-tracking.service';
 
 interface TimeEntry {
   taskId: number;
@@ -49,6 +50,7 @@ export class TaskDetailComponent implements OnInit {
   constructor(
     private taskService: TaskService,
     private projectService: ProjectService,
+    private timeTrackingService: TimeTrackingService,
     public authService: AuthService
   ) {}
 
@@ -258,14 +260,33 @@ export class TaskDetailComponent implements OnInit {
     });
   }
 
-  // Handle time logged from time tracking component
-  onTimeLogged(entry: TimeEntry): void {
-    // In a production app, you would update the task or save this data
-    console.log('Time logged:', entry);
+ // Handle time logged from time tracking component
+ onTimeLogged(entry: any): void {
+  console.log('Time logged successfully:', entry);
+  
+  // Show feedback to the user
+  // You could implement a toast notification system here
+  
+  // Optionally reload the task to show updated information
+  // this.loadTask();
+  
+  // Show temporary success message (will disappear on next action)
+  this.formError = null;
+  const successMessage = document.createElement('div');
+  successMessage.className = 'alert alert-success mt-3';
+  successMessage.textContent = `Time entry recorded: ${entry.hours} hours on ${this.formatDate(entry.date)}`;
+  
+  // Find time tracking area
+  const timeTrackingElement = document.querySelector('app-time-tracking');
+  if (timeTrackingElement) {
+    timeTrackingElement.parentNode?.insertBefore(successMessage, timeTrackingElement);
     
-    // Optionally show a success message
-    // You could add a toast notification system here
+    // Remove message after 3 seconds
+    setTimeout(() => {
+      successMessage.remove();
+    }, 3000);
   }
+}
 
   // Helper functions
   getFormattedDate(date: Date): string {

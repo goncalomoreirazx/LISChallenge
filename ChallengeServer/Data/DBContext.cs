@@ -14,6 +14,7 @@ namespace ChallengeServer.Data
         public DbSet<Project> Projects { get; set; }
         public DbSet<ProjectTask> Tasks { get; set; }
         public DbSet<ProjectProgrammer> ProjectProgrammers { get; set; }
+        public DbSet<TimeTracking> TimeEntries { get; set; } // Added TimeTracking entity
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -52,18 +53,23 @@ namespace ChallengeServer.Data
             modelBuilder.Entity<Project>()
                 .Property(p => p.Budget)
                 .HasColumnType("decimal(18,2)");
+                
+            // Configure decimal precision for TimeTracking.Hours
+            modelBuilder.Entity<TimeTracking>()
+                .Property(t => t.Hours)
+                .HasColumnType("decimal(5,2)");
 
-             modelBuilder.Entity<ProjectProgrammer>()
+            modelBuilder.Entity<ProjectProgrammer>()
                 .HasOne(pp => pp.Project)
                 .WithMany()
                 .HasForeignKey(pp => pp.ProjectId)
                 .OnDelete(DeleteBehavior.Cascade);
             
-             modelBuilder.Entity<ProjectProgrammer>()
+            modelBuilder.Entity<ProjectProgrammer>()
                 .HasOne(pp => pp.Programmer)
                 .WithMany()
                 .HasForeignKey(pp => pp.ProgrammerId)
                 .OnDelete(DeleteBehavior.Restrict);
-                }
+        }
     }
 }
