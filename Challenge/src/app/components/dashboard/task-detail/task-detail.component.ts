@@ -1,4 +1,3 @@
-// src/app/components/dashboard/task-detail/task-detail.component.ts
 import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
@@ -24,8 +23,8 @@ interface TimeEntry {
   imports: [CommonModule, FormsModule, TimeTrackingComponent]
 })
 export class TaskDetailComponent implements OnInit {
-  @Input() taskId!: number;
-  @Input() projectId!: number;
+  @Input() taskId: number = 0;
+  @Input() projectId: number = 0;
   @Output() closeDetail = new EventEmitter<void>();
   @Output() taskUpdated = new EventEmitter<void>();
   
@@ -55,12 +54,21 @@ export class TaskDetailComponent implements OnInit {
   ) {}
 
   ngOnInit(): void {
-    this.loadTask();
+    if (this.taskId && this.taskId > 0) {
+      this.loadTask();
+    } else {
+      this.error = "No task ID provided";
+      this.loading = false;
+    }
     
     // Only load programmers if we're a project manager AND have a valid project ID
-    if (this.authService.isProjectManager() && this.projectId && this.projectId > 0) {
+    if (this.isUserAuthorized() && this.authService.isProjectManager() && this.projectId && this.projectId > 0) {
       this.loadProjectProgrammers();
     }
+  }
+
+  isUserAuthorized(): boolean {
+    return this.authService && this.authService.currentUserValue !== null;
   }
 
   loadTask(): void {
@@ -77,7 +85,7 @@ export class TaskDetailComponent implements OnInit {
           this.projectId = this.task.projectId;
           
           // Now that we have a valid project ID, load programmers if needed
-          if (this.authService.isProjectManager()) {
+          if (this.isUserAuthorized() && this.authService.isProjectManager()) {
             this.loadProjectProgrammers();
           }
         }
@@ -163,7 +171,7 @@ export class TaskDetailComponent implements OnInit {
     };
     
     // Only add status if user is a programmer
-    if (this.authService.isProgrammer()) {
+    if (this.isUserAuthorized() && this.authService.isProgrammer()) {
       taskToUpdate.status = this.editedTask.status;
     }
 
@@ -211,6 +219,11 @@ export class TaskDetailComponent implements OnInit {
   // Update task status
   updateTaskStatus(status: string): void {
     // Check user permissions
+    if (!this.isUserAuthorized()) {
+      alert('User not authenticated.');
+      return;
+    }
+    
     const currentUser = this.authService.currentUserValue;
     
     if (!currentUser) {

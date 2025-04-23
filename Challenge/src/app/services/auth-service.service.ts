@@ -1,7 +1,7 @@
 import { Injectable, Inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError, of } from 'rxjs';
-import { tap, catchError, switchMap } from 'rxjs/operators';
+import { tap, catchError } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { environment } from '../environment/environment';
 import { isPlatformBrowser } from '@angular/common';
@@ -50,7 +50,7 @@ export class AuthService {
         }
       } catch (error) {
         console.error('Error loading stored user data in constructor', error);
-        this.logout();
+        this.clearStorageData();
       }
     }
   }

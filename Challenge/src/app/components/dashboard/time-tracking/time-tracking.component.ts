@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Output, EventEmitter } from '@angular/core';
+import { Component, OnInit, Input, Output, EventEmitter, OnChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Task } from '../../../services/task.service';
@@ -11,7 +11,7 @@ import { TimeTrackingService, TimeEntry, CreateTimeEntry } from '../../../servic
   standalone: true,
   imports: [CommonModule, FormsModule]
 })
-export class TimeTrackingComponent implements OnInit {
+export class TimeTrackingComponent implements OnInit, OnChanges {
   @Input() task: Task | null = null;
   @Output() timeLogged = new EventEmitter<any>(); // Using 'any' to avoid interface conflicts
   

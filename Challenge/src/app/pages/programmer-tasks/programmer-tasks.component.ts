@@ -1,4 +1,3 @@
-// src/app/pages/programmer-tasks/programmer-tasks.component.ts
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
@@ -7,7 +6,7 @@ import { AuthService } from '../../services/auth-service.service';
 import { TaskService, Task } from '../../services/task.service';
 import { FormsModule } from '@angular/forms';
 import { TaskDetailComponent } from '../../components/dashboard/task-detail/task-detail.component';
-import { TaskStatisticsComponent } from "../../components/dashboard/task-statistics/task-statistics.component";
+import { TaskStatisticsComponent } from '../../components/dashboard/task-statistics/task-statistics.component';
 
 @Component({
   selector: 'app-programmer-tasks',
