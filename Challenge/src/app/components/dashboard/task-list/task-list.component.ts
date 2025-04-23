@@ -65,24 +65,35 @@ export class TaskListComponent implements OnInit {
     });
   }
 
-  // Load only programmers allocated to this project
-  loadProjectProgrammers(): void {
-    this.projectService.getProjectProgrammers(this.projectId).subscribe({
-      next: (programmers) => {
-        this.availableProgrammers = programmers;
-        console.log('Loaded project programmers:', programmers);
-        
-        // If no programmers available, show a hint
-        if (this.availableProgrammers.length === 0) {
-          this.formError = 'No programmers allocated to this project. Please allocate programmers first.';
-        }
-      },
-      error: (err) => {
-        console.error('Error loading project programmers', err);
-        this.formError = 'Error loading available programmers. Please try again.';
-      }
-    });
-  }
+  /**
+ * Public method to reload project programmers from outside
+  * This will be called after programmer allocation
+  */
+ loadProjectProgrammers(): void {
+   // Clear any existing programmers
+   this.availableProgrammers = [];
+   this.formError = null;
+   
+   this.projectService.getProjectProgrammers(this.projectId).subscribe({
+     next: (programmers) => {
+       this.availableProgrammers = programmers;
+       console.log('Reloaded project programmers after allocation:', programmers);
+       
+       // Check if we need to show the new project form and update error message
+       if (this.showNewTaskForm) {
+         if (this.availableProgrammers.length === 0) {
+           this.formError = 'No programmers allocated to this project. Please allocate programmers first.';
+         } else {
+           this.formError = null;
+         }
+       }
+     },
+     error: (err) => {
+       console.error('Error loading project programmers after allocation', err);
+       this.formError = 'Error loading available programmers. Please try again.';
+     }
+   });
+ }
 
   // Toggle new task form
   toggleNewTaskForm(): void {

@@ -259,31 +259,45 @@ export class ProjectDetailComponent implements OnInit {
     }
   }
 
-  allocateProgrammers(): void {
-    if (!this.projectId) return;
-    
-    this.isAllocating = true;
-    this.allocationError = null;
-    
-    this.projectService.allocateProgrammers(this.projectId, this.selectedProgrammerIds).subscribe({
-      next: () => {
-        this.isAllocating = false;
-        
-        // Close the modal
-        if (this.programmerModal) {
-          this.programmerModal.hide();
+  // Updated allocateProgrammers method in project-details.component.ts
+allocateProgrammers(): void {
+  if (!this.projectId) return;
+  
+  this.isAllocating = true;
+  this.allocationError = null;
+  
+  this.projectService.allocateProgrammers(this.projectId, this.selectedProgrammerIds).subscribe({
+    next: () => {
+      this.isAllocating = false;
+      
+      // Close the modal
+      if (this.programmerModal) {
+        this.programmerModal.hide();
+      }
+      
+      // Reload programmers
+      this.loadProjectProgrammers();
+      
+      // Force a refresh of the task list component
+      setTimeout(() => {
+        // Find the task-list component and call its loadProjectProgrammers method
+        const taskListComponent = document.querySelector('app-task-list') as any;
+        if (taskListComponent && taskListComponent.loadProjectProgrammers) {
+          taskListComponent.loadProjectProgrammers();
         }
         
-        // Reload programmers
-        this.loadProjectProgrammers();
-      },
-      error: (err) => {
-        this.isAllocating = false;
-        this.allocationError = err.error?.message || 'Failed to allocate programmers. Please try again.';
-        console.error('Error allocating programmers', err);
-      }
-    });
-  }
+        // Alternative approach: Reload the entire page if the component method isn't accessible
+        // Uncomment the line below if the component method doesn't work
+         window.location.reload();
+      }, 500); // Small delay to ensure modal is closed first
+    },
+    error: (err) => {
+      this.isAllocating = false;
+      this.allocationError = err.error?.message || 'Failed to allocate programmers. Please try again.';
+      console.error('Error allocating programmers', err);
+    }
+  });
+}
 
   // Format date for display
   formatDate(dateString: string): string {
