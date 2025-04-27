@@ -109,6 +109,7 @@ namespace ChallengeServer.Controllers
 
         // POST: api/time-tracking
         [HttpPost]
+        [Authorize] // No policy here, we'll check the user type in the method
         public async Task<ActionResult<TimeEntryDto>> CreateTimeEntry(CreateTimeEntryDto timeEntryDto)
         {
             try
@@ -117,6 +118,7 @@ namespace ChallengeServer.Controllers
                 var userId = User.FindFirstValue("Id");
                 if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
                 {
+                    _logger.LogWarning("User ID not found in token or invalid: {UserId}", userId);
                     return Unauthorized(new { message = "User not authenticated properly" });
                 }
 
@@ -124,25 +126,30 @@ namespace ChallengeServer.Controllers
                 var userType = User.FindFirstValue("UserType");
                 if (string.IsNullOrEmpty(userType) || !int.TryParse(userType, out int userTypeId))
                 {
+                    _logger.LogWarning("User type not found in token or invalid: {UserType}", userType);
                     return Unauthorized(new { message = "User type not determined" });
                 }
 
                 // Only programmers can log time
-                if (userTypeId != 2) // Not a programmer
+                if (userTypeId != 2) // 2 = Programmer
                 {
-                    return Forbid(new { message = "Only programmers can log time for tasks" });
+                    _logger.LogWarning("Non-programmer user attempted to log time: UserType={UserType}, UserId={UserId}", userTypeId, currentUserId);
+                    return StatusCode(403, new { message = "Only programmers can log time for tasks" });
                 }
 
-                // Verify that the task exists and the current user is assigned to it
+                // Check if the task exists
                 var task = await _context.Tasks.FindAsync(timeEntryDto.TaskId);
                 if (task == null)
                 {
+                    _logger.LogWarning("Time entry attempt for non-existent task: {TaskId}", timeEntryDto.TaskId);
                     return NotFound(new { message = "Task not found" });
                 }
 
+                // Verify that the programmer is assigned to this task
                 if (task.AssigneeId != currentUserId)
                 {
-                    return Forbid(new { message = "You can only log time for tasks assigned to you" });
+                    _logger.LogWarning("Programmer attempted to log time for unassigned task: UserId={UserId}, TaskId={TaskId}", currentUserId, task.Id);
+                    return StatusCode(403, new { message = "You can only log time for tasks assigned to you" });
                 }
 
                 // Create a new time entry
@@ -155,6 +162,9 @@ namespace ChallengeServer.Controllers
                     Notes = timeEntryDto.Notes,
                     CreatedAt = DateTime.UtcNow
                 };
+
+                _logger.LogInformation("Creating time entry: TaskId={TaskId}, UserId={UserId}, Date={Date}, Hours={Hours}", 
+                    timeEntry.TaskId, timeEntry.UserId, timeEntry.Date, timeEntry.Hours);
 
                 _context.TimeEntries.Add(timeEntry);
                 await _context.SaveChangesAsync();
@@ -177,12 +187,14 @@ namespace ChallengeServer.Controllers
                     CreatedAt = timeEntry.CreatedAt
                 };
 
+                _logger.LogInformation("Time entry created successfully: Id={TimeEntryId}", timeEntry.Id);
+
                 return CreatedAtAction(nameof(GetTimeEntriesForTask), new { taskId = timeEntry.TaskId }, createdTimeEntryDto);
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error creating time entry");
-                return StatusCode(500, new { message = "Internal server error" });
+                _logger.LogError(ex, "Error creating time entry: {Message}", ex.Message);
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
             }
         }
 
