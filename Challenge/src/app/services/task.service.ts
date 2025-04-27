@@ -1,6 +1,6 @@
-// Updated src/app/services/task.service.ts
+// src/app/services/task.service.ts
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { Observable, throwError } from 'rxjs';
 import { catchError, tap } from 'rxjs/operators';
 import { environment } from '../environment/environment';
@@ -44,11 +44,17 @@ export class TaskService {
   // Get all tasks assigned to the current programmer
   // For Project Managers, this returns all tasks for their projects
   getProgrammerTasks(): Observable<Task[]> {
+    console.log('Fetching programmer/manager tasks from:', `${this.apiUrl}/my-tasks`);
+    console.log('User type:', this.authService.currentUserValue?.userType);
+    
     return this.http.get<Task[]>(`${this.apiUrl}/my-tasks`).pipe(
       tap(tasks => {
         console.log(`Retrieved ${tasks.length} tasks. User type: ${this.authService.currentUserValue?.userType}`);
+        if (tasks.length > 0) {
+          console.log('Sample task:', tasks[0]);
+        }
       }),
-      catchError(error => {
+      catchError((error: HttpErrorResponse) => {
         console.error('Error fetching tasks:', error);
         return throwError(() => error);
       })
@@ -58,7 +64,7 @@ export class TaskService {
   // Get tasks by status for the current user
   getProgrammerTasksByStatus(status: string): Observable<Task[]> {
     return this.http.get<Task[]>(`${this.apiUrl}/my-tasks?status=${status}`).pipe(
-      catchError(error => {
+      catchError((error: HttpErrorResponse) => {
         console.error(`Error fetching tasks with status ${status}:`, error);
         return throwError(() => error);
       })
@@ -68,7 +74,7 @@ export class TaskService {
   // Get a specific task by ID
   getTask(id: number): Observable<Task> {
     return this.http.get<Task>(`${this.apiUrl}/${id}`).pipe(
-      catchError(error => {
+      catchError((error: HttpErrorResponse) => {
         console.error(`Error fetching task ${id}:`, error);
         return throwError(() => error);
       })
@@ -79,7 +85,7 @@ export class TaskService {
   createTask(task: Omit<Task, 'id' | 'createdAt' | 'completedAt'>): Observable<Task> {
     return this.http.post<Task>(this.apiUrl, task).pipe(
       tap(response => console.log('Task created:', response)),
-      catchError(error => {
+      catchError((error: HttpErrorResponse) => {
         console.error('Error creating task:', error);
         return throwError(() => error);
       })
@@ -89,7 +95,7 @@ export class TaskService {
   // Update an existing task
   updateTask(id: number, task: Partial<Omit<Task, 'id' | 'createdAt'>>): Observable<void> {
     return this.http.put<void>(`${this.apiUrl}/${id}`, task).pipe(
-      catchError(error => {
+      catchError((error: HttpErrorResponse) => {
         console.error(`Error updating task ${id}:`, error);
         return throwError(() => error);
       })
@@ -99,7 +105,7 @@ export class TaskService {
   // Delete a task
   deleteTask(id: number): Observable<void> {
     return this.http.delete<void>(`${this.apiUrl}/${id}`).pipe(
-      catchError(error => {
+      catchError((error: HttpErrorResponse) => {
         console.error(`Error deleting task ${id}:`, error);
         return throwError(() => error);
       })
@@ -109,7 +115,7 @@ export class TaskService {
   // Update task status
   updateTaskStatus(id: number, status: string): Observable<void> {
     return this.http.patch<void>(`${this.apiUrl}/${id}/status`, { status }).pipe(
-      catchError(error => {
+      catchError((error: HttpErrorResponse) => {
         console.error(`Error updating status for task ${id}:`, error);
         return throwError(() => error);
       })

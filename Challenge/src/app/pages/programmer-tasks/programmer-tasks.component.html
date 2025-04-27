@@ -26,6 +26,19 @@
       </div>
     </nav>
     
+    <!-- User Info - Debugging Only -->
+    <div class="container-fluid mb-4 bg-light p-3 rounded">
+      <div class="row">
+        <div class="col-12">
+          <h6>User Information (Debug)</h6>
+          <p><strong>User:</strong> {{ authService.currentUserValue?.fullName }} (ID: {{ authService.currentUserValue?.id }})</p>
+          <p><strong>Type:</strong> {{ authService.currentUserValue?.userType }} - {{ authService.currentUserValue?.userTypeDescription }}</p>
+          <p><strong>Is Project Manager:</strong> {{ authService.isProjectManager() }}</p>
+          <p><strong>Is Programmer:</strong> {{ authService.isProgrammer() }}</p>
+        </div>
+      </div>
+    </div>
+    
     <!-- Page content -->
     <div class="container-fluid">
       <!-- Task Detail View -->
@@ -42,11 +55,12 @@
       
       <!-- Task List View with Statistics -->
       <div *ngIf="!selectedTaskId">
-        <!-- Statistics Row - Only show for programmers -->
+        <!-- Statistics Row -->
         <div class="row mb-4" *ngIf="authService.isProgrammer()">
           <div class="col-12 col-md-10 col-lg-8 mx-auto">
             <app-task-statistics></app-task-statistics>
           </div>
+        </div>
         
         <!-- Project Manager View - Task Overview Instructions -->
         <div class="row mb-4 mt-2" *ngIf="authService.isProjectManager()">
@@ -88,6 +102,19 @@
           </div>
         </div>
         
+        <!-- Debug Info -->
+        <div class="row mb-4">
+          <div class="col-12">
+            <div class="alert alert-secondary">
+              <h6>Debug Information</h6>
+              <p><strong>Total tasks loaded:</strong> {{ tasks.length }}</p>
+              <p><strong>Filtered tasks:</strong> {{ filteredTasks.length }}</p>
+              <p><strong>Current status filter:</strong> {{ statusFilter }}</p>
+              <p><strong>Current search query:</strong> {{ searchQuery ? searchQuery : '(none)' }}</p>
+            </div>
+          </div>
+        </div>
+        
         <!-- Task cards -->
         <div class="row">
           <!-- Loading indicator -->
@@ -114,7 +141,14 @@
               <span *ngIf="statusFilter !== 'all' || searchQuery">Try changing your filters</span>
               <span *ngIf="statusFilter === 'all' && !searchQuery">
                 <ng-container *ngIf="authService.isProgrammer()">You don't have any tasks assigned yet</ng-container>
-                <ng-container *ngIf="authService.isProjectManager()">No tasks found in the system</ng-container>
+                <ng-container *ngIf="authService.isProjectManager()">
+                  No tasks found in your projects. You may need to:
+                  <ul class="text-start mt-2">
+                    <li>Create new projects in the Projects section</li>
+                    <li>Add programmers to your existing projects</li>
+                    <li>Create tasks and assign them to programmers</li>
+                  </ul>
+                </ng-container>
               </span>
             </p>
           </div>
@@ -167,10 +201,3 @@
                   </button>
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>

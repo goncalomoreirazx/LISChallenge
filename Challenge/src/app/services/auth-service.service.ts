@@ -1,3 +1,4 @@
+// Challenge/src/app/services/auth-service.service.ts
 import { Injectable, Inject, PLATFORM_ID, NgZone } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { BehaviorSubject, Observable, throwError, of } from 'rxjs';
@@ -209,12 +210,16 @@ export class AuthService {
   // Check if user is a project manager
   isProjectManager(): boolean {
     const user = this.currentUserValue;
-    return user ? user.userType === 1 : false;
+    const isManager = user !== null && user.userType === 1;
+    console.log('[AuthService] isProjectManager check:', isManager, 'User type:', user?.userType);
+    return isManager;
   }
 
   // Check if user is a programmer
   isProgrammer(): boolean {
     const user = this.currentUserValue;
-    return user ? user.userType === 2 : false;
+    const isProgrammer = user !== null && user.userType === 2;
+    console.log('[AuthService] isProgrammer check:', isProgrammer, 'User type:', user?.userType);
+    return isProgrammer;
   }
 }

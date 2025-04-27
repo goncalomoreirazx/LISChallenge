@@ -59,7 +59,6 @@ export class SidebarComponent implements OnInit {
     // Create base menu with common items
     this.menuItems = [
       { icon: 'bi bi-speedometer2', label: 'Dashboard', link: '/dashboard' },
-      { icon: 'bi bi-question-circle', label: 'Help', link: '/help' }
     ];
     
     // Only add Projects for Project Managers (type 1)
@@ -81,10 +80,8 @@ export class SidebarComponent implements OnInit {
       // Custom order: Dashboard, Profile, Projectos, Tarefas, Help
       const order: Record<string, number> = {
         'Dashboard': 1,
-        'Profile': 2,
-        'Projectos': 3,
-        'Tarefas': 4,
-        'Help': 5
+        'Projectos': 2,
+        'Tarefas': 3,
       };
       
       return (order[a.label as string] || 99) - (order[b.label as string] || 99);

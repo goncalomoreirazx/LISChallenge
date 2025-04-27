@@ -1,4 +1,3 @@
-// ChallengeServer/Controllers/ProgrammerController.cs
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
@@ -35,6 +34,7 @@ namespace ChallengeServer.Controllers
                 var userId = User.FindFirstValue("Id");
                 if (string.IsNullOrEmpty(userId) || !int.TryParse(userId, out int currentUserId))
                 {
+                    _logger.LogWarning("User ID not found in token or invalid: {UserId}", userId);
                     return Unauthorized(new { message = "User not authenticated properly" });
                 }
 
@@ -42,14 +42,26 @@ namespace ChallengeServer.Controllers
                 var userType = User.FindFirstValue("UserType");
                 if (string.IsNullOrEmpty(userType) || !int.TryParse(userType, out int userTypeId))
                 {
+                    _logger.LogWarning("User type not found in token or invalid: {UserType}", userType);
                     return Unauthorized(new { message = "User type not determined" });
                 }
+
+                _logger.LogInformation("GetMyTasks called by user ID {UserId}, type {UserType}", currentUserId, userTypeId);
 
                 // Create base query depending on user type
                 IQueryable<Models.ProjectTask> query;
 
                 if (userTypeId == 1) // Project Manager: get all tasks for projects they manage
                 {
+                    _logger.LogInformation("Fetching tasks for Project Manager {UserId}", currentUserId);
+                    
+                    // First check if the project manager has any projects
+                    var projectCount = await _context.Projects
+                        .Where(p => p.ManagerId == currentUserId)
+                        .CountAsync();
+                        
+                    _logger.LogInformation("Project Manager {UserId} has {ProjectCount} projects", currentUserId, projectCount);
+                    
                     query = _context.Tasks
                         .Include(t => t.Project)
                         .Include(t => t.Assignee)
@@ -57,19 +69,27 @@ namespace ChallengeServer.Controllers
                 }
                 else // Programmer: get only their assigned tasks
                 {
+                    _logger.LogInformation("Fetching tasks for Programmer {UserId}", currentUserId);
+                    
                     query = _context.Tasks
                         .Include(t => t.Project)
                         .Include(t => t.Assignee)
                         .Where(t => t.AssigneeId == currentUserId);
                 }
 
+                // Check if the query returns any tasks before filtering
+                var preFilterCount = await query.CountAsync();
+                _logger.LogInformation("Pre-filter task count: {PreFilterCount}", preFilterCount);
+
                 // Filter by status if provided
                 if (!string.IsNullOrEmpty(status))
                 {
+                    _logger.LogInformation("Filtering by status: {Status}", status);
                     query = query.Where(t => t.Status == status);
                 }
 
                 var tasks = await query.ToListAsync();
+                _logger.LogInformation("Retrieved {TaskCount} tasks after filtering", tasks.Count);
                 
                 // Map to DTOs
                 var taskDtos = tasks.Select(t => new TaskDto
@@ -92,7 +112,7 @@ namespace ChallengeServer.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error retrieving tasks");
-                return StatusCode(500, new { message = "Internal server error" });
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
             }
         }
 
@@ -117,16 +137,32 @@ namespace ChallengeServer.Controllers
                     return Unauthorized(new { message = "User type not determined" });
                 }
                 
-                // Only allow programmers to view statistics
-                if (userTypeId != 2) // Not a programmer
+                _logger.LogInformation("GetMyTasksStats called by user ID {UserId}, type {UserType}", currentUserId, userTypeId);
+                
+                // Allow both project managers and programmers to view statistics
+                var tasks = new List<Models.ProjectTask>();
+                
+                if (userTypeId == 1) // Project Manager
                 {
+                    tasks = await _context.Tasks
+                        .Where(t => t.Project.ManagerId == currentUserId)
+                        .ToListAsync();
+                        
+                    _logger.LogInformation("Retrieved {TaskCount} tasks for Project Manager {UserId}", tasks.Count, currentUserId);
+                }
+                else if (userTypeId == 2) // Programmer
+                {
+                    tasks = await _context.Tasks
+                        .Where(t => t.AssigneeId == currentUserId)
+                        .ToListAsync();
+                        
+                    _logger.LogInformation("Retrieved {TaskCount} tasks for Programmer {UserId}", tasks.Count, currentUserId);
+                }
+                else
+                {
+                    _logger.LogWarning("Invalid user type {UserType} for user {UserId}", userTypeId, currentUserId);
                     return Forbid();
                 }
-
-                // Get tasks assigned to the current programmer
-                var tasks = await _context.Tasks
-                    .Where(t => t.AssigneeId == currentUserId)
-                    .ToListAsync();
 
                 // Calculate statistics
                 var totalTasks = tasks.Count;
@@ -155,10 +191,9 @@ namespace ChallengeServer.Controllers
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error retrieving programmer task statistics");
-                return StatusCode(500, new { message = "Internal server error" });
+                _logger.LogError(ex, "Error retrieving task statistics");
+                return StatusCode(500, new { message = "Internal server error", details = ex.Message });
             }
         }
-
     }
-    }
+}

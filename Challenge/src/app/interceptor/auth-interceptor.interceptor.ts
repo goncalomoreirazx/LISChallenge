@@ -1,3 +1,4 @@
+// Challenge/src/app/interceptor/auth-interceptor.interceptor.ts
 import { HttpInterceptorFn, HttpRequest, HttpHandlerFn, HttpErrorResponse } from '@angular/common/http';
 import { inject, PLATFORM_ID } from '@angular/core';
 import { catchError, throwError } from 'rxjs';
@@ -55,9 +56,11 @@ export const AuthInterceptor: HttpInterceptorFn = (
 
   // Handle the request and catch any authentication errors
   return next(request).pipe(
-    catchError((error: HttpErrorResponse) => {
+    catchError((error: any) => {
       console.error('HTTP Error:', error);
-      if (error.status === 401 && isBrowser) {
+      
+      // We need to check if error is an HttpErrorResponse, not ErrorEvent
+      if (error instanceof HttpErrorResponse && error.status === 401 && isBrowser) {
         console.log('401 Unauthorized - logging out');
         // If unauthorized, log out the user and redirect to login page
         authService.logout();
