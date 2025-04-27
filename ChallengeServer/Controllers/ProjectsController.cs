@@ -241,20 +241,33 @@ public async Task<ActionResult<Project>> CreateProject(CreateProjectDto projectD
                     return Forbid();
                 }
                 
-                // Check for related records and delete them first
+                // Get all tasks for this project
                 var relatedTasks = await _context.Tasks.Where(t => t.ProjectId == id).ToListAsync();
+                
+                // For each task, delete related time tracking entries first
+                foreach (var task in relatedTasks)
+                {
+                    var timeEntries = await _context.TimeEntries.Where(te => te.TaskId == task.Id).ToListAsync();
+                    if (timeEntries.Any())
+                    {
+                        _context.TimeEntries.RemoveRange(timeEntries);
+                    }
+                }
+                
+                // Now delete the tasks
                 if (relatedTasks.Any())
                 {
                     _context.Tasks.RemoveRange(relatedTasks);
                 }
                 
+                // Delete project programmers allocations
                 var relatedProgrammers = await _context.ProjectProgrammers.Where(pp => pp.ProjectId == id).ToListAsync();
                 if (relatedProgrammers.Any())
                 {
                     _context.ProjectProgrammers.RemoveRange(relatedProgrammers);
                 }
 
-                // Now delete the project
+                // Finally delete the project
                 _context.Projects.Remove(project);
                 await _context.SaveChangesAsync();
 
@@ -270,7 +283,6 @@ public async Task<ActionResult<Project>> CreateProject(CreateProjectDto projectD
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
-
 
         [HttpPost("{id}/programmers")]
         [Authorize(Policy = "ProjectManager")]
