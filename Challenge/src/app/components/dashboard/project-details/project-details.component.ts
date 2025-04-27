@@ -289,7 +289,7 @@ allocateProgrammers(): void {
         // Alternative approach: Reload the entire page if the component method isn't accessible
         // Uncomment the line below if the component method doesn't work
          window.location.reload();
-      }, 500); // Small delay to ensure modal is closed first
+      }, 100); // Small delay to ensure modal is closed first
     },
     error: (err) => {
       this.isAllocating = false;
