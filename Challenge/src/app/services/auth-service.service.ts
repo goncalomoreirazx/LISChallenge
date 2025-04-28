@@ -211,7 +211,7 @@ export class AuthService {
   isProjectManager(): boolean {
     const user = this.currentUserValue;
     const isManager = user !== null && user.userType === 1;
-    console.log('[AuthService] isProjectManager check:', isManager, 'User type:', user?.userType);
+    //console.log('[AuthService] isProjectManager check:', isManager, 'User type:', user?.userType);
     return isManager;
   }
 
@@ -219,7 +219,7 @@ export class AuthService {
   isProgrammer(): boolean {
     const user = this.currentUserValue;
     const isProgrammer = user !== null && user.userType === 2;
-    console.log('[AuthService] isProgrammer check:', isProgrammer, 'User type:', user?.userType);
+    //console.log('[AuthService] isProgrammer check:', isProgrammer, 'User type:', user?.userType);
     return isProgrammer;
   }
 }
