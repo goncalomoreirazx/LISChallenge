@@ -24,7 +24,7 @@ Configuração do Backend (.NET Core)
 
 Clone o repositório e navegue até a pasta do backend:
 
-bashgit clone <url-do-repositório>
+git clone <url-do-repositório>
 cd ChallengeServer
 
 Atualize a string de conexão no appsettings.json se necessário:
@@ -35,22 +35,23 @@ json"ConnectionStrings": {
 
 Compile e execute o backend:
 
-bashdotnet build
+dotnet build
 dotnet run
+
 A API backend deve estar rodando em http://localhost:5043.
 Configuração do Frontend (Angular)
 
 Navegue até a pasta do frontend:
 
-bashcd Challenge
+cd Challenge
 
 Instale as dependências:
 
-bashnpm install
+npm install
 
 Inicie o servidor de desenvolvimento:
 
-bashng serve
+ng serve
 A aplicação Angular deve estar rodando em http://localhost:4200.
 Teste da Aplicação
 
